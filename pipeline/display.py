@@ -33,7 +33,7 @@ def show_image(ax, image, title=None, axis_off=False, zscale=True):
     if axis_off:
         ax.set_axis_off()
 
-def add_circles(ax, x, y, radius=0.5, color='red', alpha=1):
+def add_circles(ax, x, y, radius=15, color='red', alpha=1):
     for xp, yp in zip(x, y):
         circle = Circle((xp, yp), radius=radius, color=color, alpha=alpha, fill=False)
         ax.add_patch(circle)
