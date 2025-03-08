@@ -169,3 +169,19 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore all Jupyter Notebook files (optional)
+*.ipynb
+
+# Ignore FITS files
+*.fits
+*.FITS
+
+# Ignore Source Extractor catalog files
+*.cat
+
+# Ignore csv files
+*.csv
