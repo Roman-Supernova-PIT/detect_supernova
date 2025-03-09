@@ -1,22 +1,30 @@
 import argparse
 import os
+import pathlib
 import pandas as pd
 from astropy.coordinates import SkyCoord
 from astropy.wcs.utils import pixel_to_skycoord
 import truth_retrieval
 import data_loader
 import coord_projection
-import truth_matching
+import subtraction
 import source_detection
+import truth_matching
 
 class Detection:
 
     INPUT_COLUMNS = ['science_band', 'science_pointing', 'science_sca', 'template_band', 'template_pointing', 'template_sca']
     
+    """
     INPUT_IMAGE_PATTERN = ("/global/cfs/cdirs/lsst/shared/external/roman-desc-sims/Roman_data"
                                 "/RomanTDS/images/simple_model/{band}/{pointing}/Roman_TDS_simple_model_{band}_{pointing}_{sca}.fits.gz")
     INPUT_TRUTH_PATTERN = ("/global/cfs/cdirs/lsst/shared/external/roman-desc-sims/Roman_data"
                                  "/RomanTDS/truth/{band}/{pointing}/Roman_TDS_index_{band}_{pointing}_{sca}.txt")
+    """
+    SIMS_DIR = os.getenv( 'SIMS_DIR', None )
+    
+    INPUT_IMAGE_PATTERN = SIMS_DIR + "/RomanTDS/images/simple_model/{band}/{pointing}/Roman_TDS_simple_model_{band}_{pointing}_{sca}.fits.gz"
+    INPUT_TRUTH_PATTERN = SIMS_DIR + "/RomanTDS/truth/{band}/{pointing}/Roman_TDS_index_{band}_{pointing}_{sca}.txt"
 
     SUB_OUTPUT_DIR_PATTERN = 'diff_{science_band}_{science_pointing}_{science_sca}_-_{template_band}_{template_pointing}_{template_sca}'
 
@@ -94,10 +102,17 @@ class Detection:
             os.makedirs(full_output_dir, exist_ok=True)
 
             # step 1: subtraction
-            # subtract(science_image_path, template_image_path, full_output_dir)
+            subtract = subtraction.Pipeline(science_band=science_id['band'],
+                                            science_pointing=science_id['pointing'],
+                                            science_sca=science_id['sca'],
+                                            template_band=template_id['band'],
+                                            template_pointing=template_id['pointing'],
+                                            template_sca=template_id['sca'],
+                                            out_dir=full_output_dir)
+            subtract.run()
             
             # step 2: detection
-            difference_image_path = os.path.join(full_output_dir, 'difference.fits')
+            difference_image_path = os.path.join(full_output_dir, 'decorr_diff.fits')
             difference_detection_path = os.path.join(full_output_dir, 'detection.cat')
             source_detection.detect(difference_image_path, difference_detection_path,
                                     source_extractor_executable=self.SOURCE_EXTRACTOR_EXECUTABLE,
