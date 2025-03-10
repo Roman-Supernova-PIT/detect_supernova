@@ -195,9 +195,12 @@ class Pipeline:
         decorr_zptimg = sfftifier.apply_decorrelation(sfftifier.PixA_Ctarget_GPU)
         decorr_psf = sfftifier.apply_decorrelation(sfftifier.PSF_target_GPU)
 
-        decoor_diff_path = self.out_dir / "decorr_diff.fits"
-        decoor_zptimg_path = self.out_dir / "decorr_zptimg.fits"
-        decorr_psf_path = self.out_dir / "decorr_psf.fits"
+        diff_pattern = (f"{self.science_info.data_id['band']}_{self.science_info.data_id['pointing']}_{self.science_info.data_id['sca']}"
+                        f"_-_{self.template_info.data_id['band']}_{self.template_info.data_id['pointing']}_{self.template_info.data_id['sca']}")
+        
+        decoor_diff_path = self.out_dir / f"decorr_diff_{diff_pattern}.fits"
+        decoor_zptimg_path = self.out_dir / f"decorr_zptimg_{diff_pattern}.fits"
+        decorr_psf_path = self.out_dir / f"decorr_psf_{diff_pattern}.fits"
 
         fits.writeto( decoor_diff_path, cp.asnumpy(decorr_diff).T, header=sfftifier.hdr_target, overwrite=True )
         fits.writeto( decoor_zptimg_path, cp.asnumpy(decorr_zptimg).T, header=sfftifier.hdr_target, overwrite=True )

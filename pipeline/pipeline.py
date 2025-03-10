@@ -1,3 +1,4 @@
+import logging
 import argparse
 import os
 import pathlib
@@ -10,6 +11,7 @@ import coord_projection
 import subtraction
 import source_detection
 import truth_matching
+
 
 class Detection:
 
@@ -26,25 +28,25 @@ class Detection:
     INPUT_IMAGE_PATTERN = SIMS_DIR + "/RomanTDS/images/simple_model/{band}/{pointing}/Roman_TDS_simple_model_{band}_{pointing}_{sca}.fits.gz"
     INPUT_TRUTH_PATTERN = SIMS_DIR + "/RomanTDS/truth/{band}/{pointing}/Roman_TDS_index_{band}_{pointing}_{sca}.txt"
 
-    SUB_OUTPUT_DIR_PATTERN = 'diff_{science_band}_{science_pointing}_{science_sca}_-_{template_band}_{template_pointing}_{template_sca}'
+    DIFF_PATTERN = '{science_band}_{science_pointing}_{science_sca}_-_{template_band}_{template_pointing}_{template_sca}'
 
     # Source detection config.
     SOURCE_EXTRACTOR_EXECUTABLE = "sex"
     DETECTION_CONFIG = "default.sex"
 
     MATCH_RADIUS = 0.4 # in arcsec unit
+
+    # file prefix
+    DIFF_IMAGE_PREFIX = 'decorr_diff_'
+    DIFF_DETECTION_PREFIX = 'detection_'
+    DIFF_TRUTH_PREFIX = 'truth_'
+    TRANSIENTS_TO_DETECTION_PREFIX = 'transients_to_detection_'
+    DETECTION_TO_TRANSIENTS_PREFIX = 'detection_to_transients_'
     
-    def __init__(self, data_records_path, base_output_dir='./output'):
+    def __init__(self, data_records_path, output_dir='./output'):
         self.data_records_path = data_records_path
         self.data_records = pd.read_csv(self.data_records_path, usecols=self.INPUT_COLUMNS)
-        self.base_output_dir = base_output_dir
-
-    @staticmethod
-    def get_difference_id(science_id, template_id):
-        _prefixed_science = {f"science_{k}": v for k, v in science_id.items()}
-        _prefixed_template = {f"template_{k}": v for k, v in template_id.items()}
-        difference_id = {**_prefixed_science, **_prefixed_template}
-        return difference_id
+        self.output_dir = output_dir
         
     @staticmethod
     def retrieve_truth(science_image_path, template_image_path,
@@ -60,11 +62,11 @@ class Detection:
             science_truth, template_truth, science_wcs, template_wcs, offset=50
         ) 
         truth.to_csv(difference_truth_path, index=False)
-        return truth
 
     @staticmethod
-    def match_transients(truth, difference_image_path, difference_detection_path, match_radius,
+    def match_transients(difference_truth_path, difference_image_path, difference_detection_path, match_radius,
                       transients_to_detection_path, detection_to_transients_path):
+        truth = pd.read_csv(difference_truth_path)
         difference_wcs = data_loader.load_wcs(difference_image_path, hdu_id=0)
          
         detection = data_loader.load_table(difference_detection_path)
@@ -77,63 +79,88 @@ class Detection:
         transients_to_detection.to_csv(transients_to_detection_path, index=False)
         detection_to_transients.to_csv(detection_to_transients_path, index=False)
         return transients_to_detection, detection_to_transients
+
+    @staticmethod
+    def get_difference_id(science_id, template_id):
+        _prefixed_science = {f"science_{k}": v for k, v in science_id.items()}
+        _prefixed_template = {f"template_{k}": v for k, v in template_id.items()}
+        difference_id = {**_prefixed_science, **_prefixed_template}
+        return difference_id
+
+    def path_helper(self, science_id, template_id):
+        file_path = {}
         
-    def run(self):
-        os.makedirs(self.base_output_dir, exist_ok=True)
-        for i, row in self.data_records.iterrows():
-            science_id = {
-            'band': row['science_band'],
-            'pointing': row['science_pointing'],
-            'sca': row['science_sca']
-            }
-        
-            template_id = {
-            'band': row['template_band'],
-            'pointing': row['template_pointing'],
-            'sca': row['template_sca']
-            }
+        difference_id = self.__class__.get_difference_id(science_id, template_id)
+        diff_pattern = self.DIFF_PATTERN.format(**difference_id)
+        file_path['full_output_dir'] = os.path.join(self.output_dir, diff_pattern)
+        os.makedirs(file_path['full_output_dir'], exist_ok=True)
 
-            difference_id = self.__class__.get_difference_id(science_id, template_id)
+        # subtraction
+        file_path['science_image_path'] = self.INPUT_IMAGE_PATTERN.format(**science_id)
+        file_path['template_image_path'] = self.INPUT_IMAGE_PATTERN.format(**template_id)
+        file_path['difference_image_path'] = os.path.join(file_path['full_output_dir'], self.DIFF_IMAGE_PREFIX + diff_pattern + '.fits')
+        # detection
+        file_path['difference_detection_path'] = os.path.join(file_path['full_output_dir'], self.DIFF_DETECTION_PREFIX + diff_pattern + '.cat')
+        # truth retrival
+        file_path['science_truth_path'] = self.INPUT_TRUTH_PATTERN.format(**science_id)
+        file_path['template_truth_path'] = self.INPUT_TRUTH_PATTERN.format(**template_id)
+        file_path['difference_truth_path'] = os.path.join(file_path['full_output_dir'], self.DIFF_TRUTH_PREFIX + diff_pattern + '.fits')
+        # truth matching
+        file_path['transients_to_detection_path'] = os.path.join(file_path['full_output_dir'], self.TRANSIENTS_TO_DETECTION_PREFIX + diff_pattern + '.csv')
+        file_path['detection_to_transients_path'] = os.path.join(file_path['full_output_dir'], self.DETECTION_TO_TRANSIENTS_PREFIX + diff_pattern + '.csv')
+        return file_path
 
-            science_image_path = self.INPUT_IMAGE_PATTERN.format(**science_id)
-            template_image_path = self.INPUT_IMAGE_PATTERN.format(**template_id)
-            sub_output_dir = self.SUB_OUTPUT_DIR_PATTERN.format(**difference_id)
-            full_output_dir = os.path.join(self.base_output_dir, sub_output_dir)
-            os.makedirs(full_output_dir, exist_ok=True)
+    def run_helper(self, science_id, template_id, step):   
+        file_path = self.path_helper(science_id, template_id)
 
-            # step 1: subtraction
+        if step == 'subtraction':
             subtract = subtraction.Pipeline(science_band=science_id['band'],
                                             science_pointing=science_id['pointing'],
                                             science_sca=science_id['sca'],
                                             template_band=template_id['band'],
                                             template_pointing=template_id['pointing'],
                                             template_sca=template_id['sca'],
-                                            out_dir=full_output_dir)
+                                            out_dir=file_path['full_output_dir'])
             subtract.run()
-            
-            # step 2: detection
-            difference_image_path = os.path.join(full_output_dir, 'decorr_diff.fits')
-            difference_detection_path = os.path.join(full_output_dir, 'detection.cat')
-            source_detection.detect(difference_image_path, difference_detection_path,
-                                    source_extractor_executable=self.SOURCE_EXTRACTOR_EXECUTABLE,
-                                    detection_config=self.DETECTION_CONFIG
-                                   )
-            
-            # step 3: truth retrival
-            science_truth_path = self.INPUT_TRUTH_PATTERN.format(**science_id)
-            template_truth_path = self.INPUT_TRUTH_PATTERN.format(**template_id)
-            difference_truth_path = os.path.join(full_output_dir, 'truth.fits')
 
-            truth = self.__class__.retrieve_truth(science_image_path, template_image_path,
-                                   science_truth_path, template_truth_path,
-                                   difference_truth_path)
-            
-            # step 4: truth matching
-            transients_to_detection_path = os.path.join(full_output_dir, 'transients_to_detection.csv')
-            detection_to_transients_path = os.path.join(full_output_dir, 'detection_to_transients.csv')
+        if step == 'detection':
+            source_detection.detect(file_path['difference_image_path'], file_path['difference_detection_path'],
+                                    source_extractor_executable=self.SOURCE_EXTRACTOR_EXECUTABLE,
+                                    detection_config=self.DETECTION_CONFIG)
+
+        if step == 'truth_retrival':
+            self.__class__.retrieve_truth(file_path['science_image_path'], file_path['template_image_path'],
+                                          file_path['science_truth_path'], file_path['template_truth_path'],
+                                          file_path['difference_truth_path'])
+
+        if step == 'truth_matching':
             transients_to_detection, detection_to_transients = self.__class__.match_transients(
-                truth, difference_image_path, difference_detection_path, self.MATCH_RADIUS,
-                transients_to_detection_path, detection_to_transients_path)
+                file_path['difference_truth_path'], file_path['difference_image_path'], file_path['difference_detection_path'],
+                self.MATCH_RADIUS,
+                file_path['transients_to_detection_path'], file_path['detection_to_transients_path'])
+            
+    def run(self):
+        os.makedirs(self.output_dir, exist_ok=True)
+        for i, row in self.data_records.iterrows():
+            science_id = {'band': row['science_band'], 'pointing': row['science_pointing'], 'sca': row['science_sca']}
+            template_id = {'band': row['template_band'], 'pointing': row['template_pointing'], 'sca': row['template_sca']}
+
+            print("[INFO] Processing started for data records "
+                          f"| Science ID {{ band: {science_id['band']}, pointing: {science_id['pointing']}, sca: {science_id['sca']} }} "
+                          f"| Template ID {{ band: {template_id['band']}, pointing: {template_id['pointing']}, sca: {template_id['sca']} }}.")
+            
+            print('[INFO] Processing subtraction')
+            self.run_helper(science_id, template_id, step='subtraction')
+
+            print('[INFO] Processing detection')
+            self.run_helper(science_id, template_id, step='detection')
+            
+            print('[INFO] Processing truth retrival')
+            self.run_helper(science_id, template_id, step='truth_retrival')
+            
+            print('[INFO] Processing truth matching')
+            self.run_helper(science_id, template_id, step='truth_matching')
+            print("[INFO] Processing finished.")
          
 def main():
     parser = argparse.ArgumentParser( 'detection pipeline' )
