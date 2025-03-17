@@ -34,11 +34,14 @@ def merge_science_and_template_truth(science_truth, template_truth, science_wcs,
 
 
     matched_status, matched_id = two_direction_skymatch(template_skycoord, science_skycoord, radius=match_radius * u.arcsec)
+    template_truth_matched = template_truth[matched_status].copy().reset_index(drop=True)
     template_truth_unmatched = template_truth[~matched_status].copy().reset_index(drop=True)
+    template_truth_unmatched['flux'] = template_truth_unmatched['flux'] * -1
 
     science_truth_new = science_truth.copy()
+    science_truth_new.loc[matched_id[matched_status], 'flux'] = science_truth_new.loc[matched_id[matched_status], 'flux'] - template_truth_matched.flux.to_numpy()
     
     merged_truth = pd.concat([science_truth_new, template_truth_unmatched]).reset_index(drop=True)
-    merged_truth = merged_truth.drop(['x', 'y'], axis=1)
+    merged_truth = merged_truth.drop(['x', 'y', 'mag'], axis=1)
     
     return merged_truth
