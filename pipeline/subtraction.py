@@ -14,6 +14,8 @@ from roman_imsim.utils import roman_utils
 INPUT_IMAGE_PATTERN = ("RomanTDS/images/simple_model/{band}/{pointing}/Roman_TDS_simple_model_{band}_{pointing}_{sca}.fits.gz")
 INPUT_TRUTH_PATTERN = ("RomanTDS/truth/{band}/{pointing}/Roman_TDS_index_{band}_{pointing}_{sca}.txt")
 SIMS_DIR = pathlib.Path( os.getenv( 'SIMS_DIR', None ) )
+TEMP_DIR = pathlib.Path("/phrosty_temp")
+
 GALSIM_CONFIG = pathlib.Path( os.getenv("SN_INFO_DIR" ) ) / "tds.yaml"
 
 IMAGE_WIDTH =4088
@@ -105,6 +107,13 @@ def get_imsim_psf(x, y, pointing, sca, size=201, config_yaml_file=None,
     psf = config.getPSF_Image(size, x, y, **kwargs)
     psf.write(str(psf_path))
 
+def load_fits_to_cp(path, return_hdr=True, return_data=True, hdu_index=0, dtype=None):
+    with fits.open(path) as hdul:
+        hdr = hdul[hdu_index].header if return_hdr else None
+        data = cp.array( np.ascontiguousarray(hdul[hdu_index].data.T), dtype=dtype ) if return_data else None
+    return hdr, data
+
+
 @dataclass
 class ImageInfo:
     data_id: dict
@@ -114,116 +123,86 @@ class ImageInfo:
         self.cx = IMAGE_WIDTH // 2
         self.cy = IMAGE_HEIGHT // 2
 
-        self.skysub_path = None
-        self.detect_mask_path = None
-        self.skyrms = None
-        self.psf_path = None
+        self.image_name = self.image_path.name
+        self.skysub_path = TEMP_DIR / f"skysub_{self.image_name}"
+        self.detmask_path = TEMP_DIR / f"detmask_{self.image_name}"
+        self.psf_path = TEMP_DIR / f"psf_{self.image_name}"
 
-        
+
 class Pipeline:
 
     def __init__(self, science_band, science_pointing, science_sca,
                  template_band, template_pointing, template_sca,
-                 galsim_config_file=GALSIM_CONFIG, temp_dir="/phrosty_temp", out_dir="./output"):
-
-        self.science_info = ImageInfo({'band': science_band, 'pointing': science_pointing, 'sca': science_sca})
-        self.template_info = ImageInfo({'band': template_band, 'pointing': template_pointing, 'sca': template_sca})
+                 galsim_config_file=GALSIM_CONFIG, out_dir="./output"):
         
         self.galsim_config_file = galsim_config_file
-        self.temp_dir = pathlib.Path(temp_dir)
         self.out_dir = pathlib.Path(out_dir)
         os.makedirs(self.out_dir, exist_ok=True)
 
-    def run_sky_subtract(self, image_info):
-        image_name = image_info.image_path.name
-        skysub_path = self.temp_dir / f"skysub_{image_name}"
-        detmask_path = self.temp_dir / f"detmask_{image_name}"
-        skyrms = sky_subtract(image_info.image_path, skysub_path, detmask_path, temp_dir=self.temp_dir, force=False )
-        
-        image_info.skysub_path = skysub_path
-        image_info.detmask_path = detmask_path
-        image_info.skyrms = skyrms
+        self.science_info = ImageInfo({'band': science_band, 'pointing': science_pointing, 'sca': science_sca})
+        self.template_info = ImageInfo({'band': template_band, 'pointing': template_pointing, 'sca': template_sca})
 
-    def run_get_imsim_psf(self, image_info):
-        image_name = image_info.image_path.name
-        psf_path = self.temp_dir / f"psf_{image_name}"
+        # get psf
+        self.run_get_imsim_psf(self.science_info) # saved to science_info.psf_path
+        self.run_get_imsim_psf(self.template_info) # saved to template_info.psf_path
+
+        # data products paths
+        self.diff_pattern = (f"{self.science_info.data_id['band']}_{self.science_info.data_id['pointing']}_{self.science_info.data_id['sca']}"
+                             f"_-_{self.template_info.data_id['band']}_{self.template_info.data_id['pointing']}_{self.template_info.data_id['sca']}")
+        self.decoor_diff_path = self.out_dir / f"decorr_diff_{self.diff_pattern}.fits"
+        self.decoor_zptimg_path = self.out_dir / f"decorr_zptimg_{self.diff_pattern}.fits"
+        self.decorr_psf_path = self.out_dir / f"decorr_psf_{self.diff_pattern}.fits"
         
+    def run_get_imsim_psf(self, image_info):
+
         get_imsim_psf(x=image_info.cx, y=image_info.cy,
                       pointing=image_info.data_id['pointing'], sca=image_info.data_id['sca'],
-                      size=201, psf_path=psf_path, config_yaml_file=self.galsim_config_file, include_photonOps=True)
-
-        image_info.psf_path = psf_path
-
-    def align_and_pre_convolve(self):
-
-        with fits.open( self.science_info.skysub_path ) as hdul:
-            hdr_sci = hdul[0].header
-            data_sci = cp.array( np.ascontiguousarray(hdul[0].data.T), dtype=cp.float64 )
-            
-        with fits.open( self.template_info.skysub_path ) as hdul:
-            hdr_templ = hdul[0].header
-            data_templ = cp.array( np.ascontiguousarray(hdul[0].data.T), dtype=cp.float64 )
-
-        with fits.open( self.science_info.psf_path ) as hdul:
-            sci_psf = cp.array( np.ascontiguousarray( hdul[0].data.T ), dtype=cp.float64 )
-
-        with fits.open( self.template_info.psf_path ) as hdul:
-            templ_psf = cp.array( np.ascontiguousarray( hdul[0].data.T ), dtype=cp.float64 )
-
-        with fits.open( self.science_info.detmask_path ) as hdul:
-            sci_detmask = cp.array( np.ascontiguousarray( hdul[0].data.T ) )
-
-        with fits.open( self.template_info.detmask_path ) as hdul:
-            templ_detmask = cp.array( np.ascontiguousarray( hdul[0].data.T ) )
-
-        sfftifier = SpaceSFFT_CupyFlow(
-            hdr_sci, hdr_templ,
-            self.science_info.skyrms,
-            self.template_info.skyrms,
-            data_sci, data_templ,
-            sci_detmask, templ_detmask,
-            sci_psf, templ_psf
-        )
-        sfftifier.resampling_image_mask_psf()
-        sfftifier.cross_convolution()
-
-        return sfftifier
-
-    def run_decorrelation(self, sfftifier):
-
-        decorr_diff = sfftifier.apply_decorrelation(sfftifier.PixA_DIFF_GPU)
-        decorr_zptimg = sfftifier.apply_decorrelation(sfftifier.PixA_Ctarget_GPU)
-        decorr_psf = sfftifier.apply_decorrelation(sfftifier.PSF_target_GPU)
-
-        diff_pattern = (f"{self.science_info.data_id['band']}_{self.science_info.data_id['pointing']}_{self.science_info.data_id['sca']}"
-                        f"_-_{self.template_info.data_id['band']}_{self.template_info.data_id['pointing']}_{self.template_info.data_id['sca']}")
-        
-        decoor_diff_path = self.out_dir / f"decorr_diff_{diff_pattern}.fits"
-        decoor_zptimg_path = self.out_dir / f"decorr_zptimg_{diff_pattern}.fits"
-        decorr_psf_path = self.out_dir / f"decorr_psf_{diff_pattern}.fits"
-
-        fits.writeto( decoor_diff_path, cp.asnumpy(decorr_diff).T, header=sfftifier.hdr_target, overwrite=True )
-        fits.writeto( decoor_zptimg_path, cp.asnumpy(decorr_zptimg).T, header=sfftifier.hdr_target, overwrite=True )
-        fits.writeto( decorr_psf_path, cp.asnumpy(decorr_psf).T, header=None, overwrite=True )
+                      size=201, psf_path=image_info.psf_path, config_yaml_file=self.galsim_config_file, include_photonOps=True)
 
     def run(self):
         # sky subtraction
-        self.run_sky_subtract(self.science_info)
-        self.run_sky_subtract(self.template_info)
-
-        # get psf
-        self.run_get_imsim_psf(self.science_info)
-        self.run_get_imsim_psf(self.template_info)
+        sci_skyrms = sky_subtract(self.science_info.image_path, self.science_info.skysub_path,
+                                                self.science_info.detmask_path, temp_dir=TEMP_DIR, force=False )
+        templ_skyrms = sky_subtract(self.template_info.image_path, self.template_info.skysub_path,
+                                                self.template_info.detmask_path, temp_dir=TEMP_DIR, force=False )
         
-        # prec-onvolution
-        sfftifier = self.align_and_pre_convolve()
+        # get data
+        sci_hdr, sci_data = load_fits_to_cp(self.science_info.skysub_path, dtype=cp.float64)
+        templ_hdr, templ_data = load_fits_to_cp(self.template_info.skysub_path, dtype=cp.float64)
+        _, sci_psf = load_fits_to_cp(self.science_info.psf_path, return_hdr=False, dtype=cp.float64)
+        _, templ_psf = load_fits_to_cp(self.template_info.psf_path, return_hdr=False, dtype=cp.float64)
+        _, sci_detmask = load_fits_to_cp(self.science_info.detmask_path, return_hdr=False)
+        _, templ_detmask = load_fits_to_cp(self.template_info.detmask_path, return_hdr=False)
+
+        # cupy flow
+        sfftifier = SpaceSFFT_CupyFlow(
+            sci_hdr, templ_hdr,
+            sci_skyrms, templ_skyrms,
+            sci_data, templ_data,
+            sci_detmask, templ_detmask,
+            sci_psf, templ_psf
+        )
+
+        # resampling
+        sfftifier.resampling_image_mask_psf()
+        # cross-convolution
+        sfftifier.cross_convolution()
 
         # subtraction
         sfftifier.sfft_subtraction()
 
-        # decorrelation
+        # find decorrelation
         sfftifier.find_decorrelation()
-        self.run_decorrelation(sfftifier)    
+        
+        # run decorrelation
+        decorr_diff = sfftifier.apply_decorrelation(sfftifier.PixA_DIFF_GPU)
+        decorr_zptimg = sfftifier.apply_decorrelation(sfftifier.PixA_Ctarget_GPU)
+        decorr_psf = sfftifier.apply_decorrelation(sfftifier.PSF_target_GPU)
+
+        # save data products
+        fits.writeto(self.decoor_diff_path, cp.asnumpy(decorr_diff).T, header=sfftifier.hdr_target, overwrite=True )
+        fits.writeto(self.decoor_zptimg_path, cp.asnumpy(decorr_zptimg).T, header=sfftifier.hdr_target, overwrite=True )
+        fits.writeto(self.decorr_psf_path, cp.asnumpy(decorr_psf).T, header=None, overwrite=True )
         
 def main():
     parser = argparse.ArgumentParser( 'phrosty pipeline' )
@@ -238,7 +217,7 @@ def main():
     # parser.add_argument( '-v', '--verbose', action='store_true', default=False, help="Show debug log info" )
     parser.add_argument( '--out-dir', default="/out_dir", help="Output dir, default /out_dir" )
     # parser.add_argument( '--ltcv-dir', default="/lc_out_dir", help="Output dir for lightcurves, default /lc_out_dir" )
-    parser.add_argument( '--temp-dir', default="/phrosty_temp", help="Temporary working dir, default /phrosty_temp" )
+    #parser.add_argument( '--temp-dir', default="/phrosty_temp", help="Temporary working dir, default /phrosty_temp" )
 
 
     args = parser.parse_args()
@@ -247,15 +226,8 @@ def main():
 
     pipeline = Pipeline(args.science_band, args.science_pointing, args.science_sca,
                         args.template_band, args.template_pointing, args.template_sca,
-                        galsim_config_file=galsim_config,
-                        temp_dir=args.temp_dir, out_dir=args.out_dir)
-    """
-    pipeline = Pipeline( args.ra, args.dec, args.band, science_images, template_images,
-                         nprocs=args.nprocs, nwrite=args.nwrite,
-                         temp_dir=args.temp_dir, out_dir=args.out_dir, ltcv_dir=args.ltcv_dir,
-                         galsim_config_file=galsim_config, force_sky_subtract=args.force_sky_subtract,
-                         nuke_temp_dir=False, verbose=args.verbose )
-    """
+                        galsim_config_file=galsim_config, out_dir=args.out_dir)
+
     pipeline.run()
 
 # ======================================================================
