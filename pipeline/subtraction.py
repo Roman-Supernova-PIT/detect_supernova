@@ -212,13 +212,7 @@ def main():
     parser.add_argument('--template_band', type=str, required=True, help="Template band" )
     parser.add_argument('--template_pointing', type=int, required=True, help="Template pointing")
     parser.add_argument('--template_sca', type=int, required=True, help="Template sca")
-    # parser.add_argument( '-p', '--nprocs', type=int, default=1, help="Number of process for multiprocessing steps (e.g. skysub)" )
-    # parser.add_argument( '-w', '--nwrite', type=int, default=5, help="Number of parallel FITS writing processes" )
-    # parser.add_argument( '-v', '--verbose', action='store_true', default=False, help="Show debug log info" )
     parser.add_argument( '--out-dir', default="/out_dir", help="Output dir, default /out_dir" )
-    # parser.add_argument( '--ltcv-dir', default="/lc_out_dir", help="Output dir for lightcurves, default /lc_out_dir" )
-    #parser.add_argument( '--temp-dir', default="/phrosty_temp", help="Temporary working dir, default /phrosty_temp" )
-
 
     args = parser.parse_args()
 
