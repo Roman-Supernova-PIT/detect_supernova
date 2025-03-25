@@ -18,7 +18,7 @@ TEMP_DIR = pathlib.Path("/phrosty_temp")
 
 GALSIM_CONFIG = pathlib.Path( os.getenv("SN_INFO_DIR" ) ) / "tds.yaml"
 
-IMAGE_WIDTH =4088
+IMAGE_WIDTH = 4088
 IMAGE_HEIGHT = 4088
 
 
