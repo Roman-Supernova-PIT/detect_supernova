@@ -4,11 +4,13 @@ import os
 import pathlib
 import argparse
 from dataclasses import dataclass
+import gzip
 from astropy.io import fits
 import numpy as np
 import cupy as cp
 from sfft.SpaceSFFTCupyFlow import SpaceSFFT_CupyFlow
 from roman_imsim.utils import roman_utils
+from sfft.utils.SExSkySubtract import SEx_SkySubtract
 
 
 INPUT_IMAGE_PATTERN = ("RomanTDS/images/simple_model/{band}/{pointing}/Roman_TDS_simple_model_{band}_{pointing}_{sca}.fits.gz")
@@ -117,6 +119,7 @@ def load_fits_to_cp(path, return_hdr=True, return_data=True, hdu_index=0, dtype=
 @dataclass
 class ImageInfo:
     data_id: dict
+    temp_dir: pathlib.Path
     
     def __post_init__(self):
         self.image_path = SIMS_DIR / pathlib.Path(INPUT_IMAGE_PATTERN.format(**self.data_id))
@@ -124,9 +127,9 @@ class ImageInfo:
         self.cy = IMAGE_HEIGHT // 2
 
         self.image_name = self.image_path.name
-        self.skysub_path = TEMP_DIR / f"skysub_{self.image_name}"
-        self.detmask_path = TEMP_DIR / f"detmask_{self.image_name}"
-        self.psf_path = TEMP_DIR / f"psf_{self.image_name}"
+        self.skysub_path = self.temp_dir / f"skysub_{self.image_name}"
+        self.detmask_path = self.temp_dir / f"detmask_{self.image_name}"
+        self.psf_path = self.temp_dir / f"psf_{self.image_name}"
 
 
 class Pipeline:
@@ -139,8 +142,8 @@ class Pipeline:
         self.out_dir = pathlib.Path(out_dir)
         os.makedirs(self.out_dir, exist_ok=True)
 
-        self.science_info = ImageInfo({'band': science_band, 'pointing': science_pointing, 'sca': science_sca})
-        self.template_info = ImageInfo({'band': template_band, 'pointing': template_pointing, 'sca': template_sca})
+        self.science_info = ImageInfo({'band': science_band, 'pointing': science_pointing, 'sca': science_sca}, self.out_dir)
+        self.template_info = ImageInfo({'band': template_band, 'pointing': template_pointing, 'sca': template_sca}, self.out_dir)
 
         # get psf
         self.run_get_imsim_psf(self.science_info) # saved to science_info.psf_path
@@ -162,9 +165,9 @@ class Pipeline:
     def run(self):
         # sky subtraction
         sci_skyrms = sky_subtract(self.science_info.image_path, self.science_info.skysub_path,
-                                                self.science_info.detmask_path, temp_dir=TEMP_DIR, force=False )
+                                                self.science_info.detmask_path, temp_dir=self.out_dir, force=False )
         templ_skyrms = sky_subtract(self.template_info.image_path, self.template_info.skysub_path,
-                                                self.template_info.detmask_path, temp_dir=TEMP_DIR, force=False )
+                                                self.template_info.detmask_path, temp_dir=self.out_dir, force=False )
         
         # get data
         sci_hdr, sci_data = load_fits_to_cp(self.science_info.skysub_path, dtype=cp.float64)
@@ -185,6 +188,7 @@ class Pipeline:
 
         # resampling
         sfftifier.resampling_image_mask_psf()
+        
         # cross-convolution
         sfftifier.cross_convolution()
 

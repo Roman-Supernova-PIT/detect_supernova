@@ -62,11 +62,11 @@ class Detection:
             science_truth, template_truth, science_wcs, template_wcs, offset=50
         ) 
         truth.to_csv(difference_truth_path, index=False)
+        return truth
 
     @staticmethod
-    def match_transients(difference_truth_path, difference_image_path, difference_detection_path, match_radius,
+    def match_transients(truth, difference_image_path, difference_detection_path, match_radius,
                       transients_to_detection_path, detection_to_transients_path):
-        truth = pd.read_csv(difference_truth_path)
         difference_wcs = data_loader.load_wcs(difference_image_path, hdu_id=0)
          
         detection = data_loader.load_table(difference_detection_path)
@@ -110,10 +110,17 @@ class Detection:
         file_path['detection_to_transients_path'] = os.path.join(file_path['full_output_dir'], self.DETECTION_TO_TRANSIENTS_PREFIX + diff_pattern + '.csv')
         return file_path
 
-    def run_helper(self, science_id, template_id, step):   
-        file_path = self.path_helper(science_id, template_id)
+    def run_helper(self):
+        for i, row in self.data_records.iterrows():
+            science_id = {'band': row['science_band'], 'pointing': row['science_pointing'], 'sca': row['science_sca']}
+            template_id = {'band': row['template_band'], 'pointing': row['template_pointing'], 'sca': row['template_sca']}
+            file_path = self.path_helper(science_id, template_id)
+            
+            print("[INFO] Processing started for data records "
+                          f"| Science ID {{ band: {science_id['band']}, pointing: {science_id['pointing']}, sca: {science_id['sca']} }} "
+                          f"| Template ID {{ band: {template_id['band']}, pointing: {template_id['pointing']}, sca: {template_id['sca']} }}.")
 
-        if step == 'subtraction':
+            print('[INFO] Processing subtraction')
             subtract = subtraction.Pipeline(science_band=science_id['band'],
                                             science_pointing=science_id['pointing'],
                                             science_sca=science_id['sca'],
@@ -123,44 +130,28 @@ class Detection:
                                             out_dir=file_path['full_output_dir'])
             subtract.run()
 
-        if step == 'detection':
+            print('[INFO] Processing detection')
             source_detection.detect(file_path['difference_image_path'], file_path['difference_detection_path'],
                                     source_extractor_executable=self.SOURCE_EXTRACTOR_EXECUTABLE,
                                     detection_config=self.DETECTION_CONFIG)
-
-        if step == 'truth_retrival':
-            self.__class__.retrieve_truth(file_path['science_image_path'], file_path['template_image_path'],
-                                          file_path['science_truth_path'], file_path['template_truth_path'],
-                                          file_path['difference_truth_path'])
-
-        if step == 'truth_matching':
+            
+            print('[INFO] Processing truth retrival')
+            truth = self.__class__.retrieve_truth(file_path['science_image_path'], file_path['template_image_path'],
+                                                  file_path['science_truth_path'], file_path['template_truth_path'],
+                                                  file_path['difference_truth_path'])
+            
+            print('[INFO] Processing truth matching')
             transients_to_detection, detection_to_transients = self.__class__.match_transients(
-                file_path['difference_truth_path'], file_path['difference_image_path'], file_path['difference_detection_path'],
+                truth, file_path['difference_image_path'], file_path['difference_detection_path'],
                 self.MATCH_RADIUS,
                 file_path['transients_to_detection_path'], file_path['detection_to_transients_path'])
             
+            print("[INFO] Processing finished.")
+            
     def run(self):
         os.makedirs(self.output_dir, exist_ok=True)
-        for i, row in self.data_records.iterrows():
-            science_id = {'band': row['science_band'], 'pointing': row['science_pointing'], 'sca': row['science_sca']}
-            template_id = {'band': row['template_band'], 'pointing': row['template_pointing'], 'sca': row['template_sca']}
+        self.run_helper()
 
-            print("[INFO] Processing started for data records "
-                          f"| Science ID {{ band: {science_id['band']}, pointing: {science_id['pointing']}, sca: {science_id['sca']} }} "
-                          f"| Template ID {{ band: {template_id['band']}, pointing: {template_id['pointing']}, sca: {template_id['sca']} }}.")
-            
-            print('[INFO] Processing subtraction')
-            self.run_helper(science_id, template_id, step='subtraction')
-
-            print('[INFO] Processing detection')
-            self.run_helper(science_id, template_id, step='detection')
-            
-            print('[INFO] Processing truth retrival')
-            self.run_helper(science_id, template_id, step='truth_retrival')
-            
-            print('[INFO] Processing truth matching')
-            self.run_helper(science_id, template_id, step='truth_matching')
-            print("[INFO] Processing finished.")
          
 def main():
     parser = argparse.ArgumentParser( 'detection pipeline' )
