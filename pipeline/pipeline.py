@@ -1,5 +1,6 @@
 import logging
 import argparse
+import tempfile
 import os
 import pathlib
 import pandas as pd
@@ -43,9 +44,10 @@ class Detection:
     TRANSIENTS_TO_DETECTION_PREFIX = 'transients_to_detection_'
     DETECTION_TO_TRANSIENTS_PREFIX = 'detection_to_transients_'
     
-    def __init__(self, data_records_path, output_dir='./output'):
+    def __init__(self, data_records_path, temp_dir=None, output_dir='./output'):
         self.data_records_path = data_records_path
         self.data_records = pd.read_csv(self.data_records_path, usecols=self.INPUT_COLUMNS)
+        self.temp_dir = temp_dir
         self.output_dir = output_dir
         
     @staticmethod
@@ -111,6 +113,16 @@ class Detection:
         return file_path
 
     def run_helper(self):
+        # create temporary directory
+        if self.temp_dir is None:
+            temp_dir_obj = tempfile.TemporaryDirectory()
+            temp_dir = pathlib.Path(temp_dir_obj.name)
+            remove_temp = True
+        else:
+            temp_dir = pathlib.Path(self.temp_dir)
+            os.makedirs(temp_dir, exist_ok=True)
+            remove_temp = False
+            
         for i, row in self.data_records.iterrows():
             science_id = {'band': row['science_band'], 'pointing': row['science_pointing'], 'sca': row['science_sca']}
             template_id = {'band': row['template_band'], 'pointing': row['template_pointing'], 'sca': row['template_sca']}
@@ -127,6 +139,7 @@ class Detection:
                                             template_band=template_id['band'],
                                             template_pointing=template_id['pointing'],
                                             template_sca=template_id['sca'],
+                                            temp_dir=temp_dir,
                                             out_dir=file_path['full_output_dir'])
             subtract.run()
 
@@ -147,6 +160,10 @@ class Detection:
                 file_path['transients_to_detection_path'], file_path['detection_to_transients_path'])
             
             print("[INFO] Processing finished.")
+
+        # remove temporary directory
+        if remove_temp:
+            temp_dir_obj.cleanup()
             
     def run(self):
         os.makedirs(self.output_dir, exist_ok=True)
@@ -154,12 +171,13 @@ class Detection:
 
          
 def main():
-    parser = argparse.ArgumentParser( 'detection pipeline' )
-    parser.add_argument( '-d', '--data_records', type=str, required=True, help="Input data records." )
-    parser.add_argument( '-o', '--output_dir', type=str, default='../output', help="Output directory." )
+    parser = argparse.ArgumentParser('detection pipeline')
+    parser.add_argument( '-d', '--data-records', type=str, required=True, help="Input data records." )
+    parser.add_argument( '-t', '--temp-dir', default=None, help="Temporary directory." )
+    parser.add_argument( '-o', '--output-dir', type=str, default='./output', help="Output directory." )
     args = parser.parse_args()
 
-    detection = Detection(args.data_records, args.output_dir)
+    detection = Detection(args.data_records, args.temp_dir, args.output_dir)
     detection.run()
 
 if __name__ == "__main__":

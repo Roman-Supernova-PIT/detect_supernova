@@ -136,18 +136,15 @@ class Pipeline:
 
     def __init__(self, science_band, science_pointing, science_sca,
                  template_band, template_pointing, template_sca,
-                 galsim_config_file=GALSIM_CONFIG, out_dir="./output"):
+                 galsim_config_file=GALSIM_CONFIG, temp_dir=None, out_dir="./output"):
         
         self.galsim_config_file = galsim_config_file
+        self.temp_dir = temp_dir
         self.out_dir = pathlib.Path(out_dir)
-        os.makedirs(self.out_dir, exist_ok=True)
 
-        self.science_info = ImageInfo({'band': science_band, 'pointing': science_pointing, 'sca': science_sca}, self.out_dir)
-        self.template_info = ImageInfo({'band': template_band, 'pointing': template_pointing, 'sca': template_sca}, self.out_dir)
-
-        # get psf
-        self.run_get_imsim_psf(self.science_info) # saved to science_info.psf_path
-        self.run_get_imsim_psf(self.template_info) # saved to template_info.psf_path
+        # science_info and template_info contains the data_ids of images and paths of temporary files (sky subtracted images, detection masks, psfs)
+        self.science_info = ImageInfo({'band': science_band, 'pointing': science_pointing, 'sca': science_sca}, self.temp_dir)
+        self.template_info = ImageInfo({'band': template_band, 'pointing': template_pointing, 'sca': template_sca}, self.temp_dir)
 
         # data products paths
         self.diff_pattern = (f"{self.science_info.data_id['band']}_{self.science_info.data_id['pointing']}_{self.science_info.data_id['sca']}"
@@ -163,11 +160,18 @@ class Pipeline:
                       size=201, psf_path=image_info.psf_path, config_yaml_file=self.galsim_config_file, include_photonOps=True)
 
     def run(self):
+        
+        os.makedirs(self.out_dir, exist_ok=True)
+
+        # get psf
+        self.run_get_imsim_psf(self.science_info) # saved to science_info.psf_path
+        self.run_get_imsim_psf(self.template_info) # saved to template_info.psf_path
+        
         # sky subtraction
         sci_skyrms = sky_subtract(self.science_info.image_path, self.science_info.skysub_path,
-                                                self.science_info.detmask_path, temp_dir=self.out_dir, force=False )
+                                  self.science_info.detmask_path, temp_dir=self.temp_dir, force=False )
         templ_skyrms = sky_subtract(self.template_info.image_path, self.template_info.skysub_path,
-                                                self.template_info.detmask_path, temp_dir=self.out_dir, force=False )
+                                    self.template_info.detmask_path, temp_dir=self.temp_dir, force=False )
         
         # get data
         sci_hdr, sci_data = load_fits_to_cp(self.science_info.skysub_path, dtype=cp.float64)
@@ -209,13 +213,14 @@ class Pipeline:
         fits.writeto(self.decorr_psf_path, cp.asnumpy(decorr_psf).T, header=None, overwrite=True )
         
 def main():
-    parser = argparse.ArgumentParser( 'phrosty pipeline' )
-    parser.add_argument('--science_band', type=str, required=True, help="Science band" )
-    parser.add_argument('--science_pointing', type=int, required=True, help="Science pointing")
-    parser.add_argument('--science_sca', type=int, required=True, help="Science sca")
-    parser.add_argument('--template_band', type=str, required=True, help="Template band" )
-    parser.add_argument('--template_pointing', type=int, required=True, help="Template pointing")
-    parser.add_argument('--template_sca', type=int, required=True, help="Template sca")
+    parser = argparse.ArgumentParser('subtraction pipeline')
+    parser.add_argument('--science-band', type=str, required=True, help="Science band" )
+    parser.add_argument('--science-pointing', type=int, required=True, help="Science pointing")
+    parser.add_argument('--science-sca', type=int, required=True, help="Science sca")
+    parser.add_argument('--template-band', type=str, required=True, help="Template band" )
+    parser.add_argument('--template-pointing', type=int, required=True, help="Template pointing")
+    parser.add_argument('--template-sca', type=int, required=True, help="Template sca")
+    parser.add_argument( '--temp-dir', default=None, help="Temporary directory, default None" )
     parser.add_argument( '--out-dir', default="/out_dir", help="Output dir, default /out_dir" )
 
     args = parser.parse_args()
@@ -224,7 +229,7 @@ def main():
 
     pipeline = Pipeline(args.science_band, args.science_pointing, args.science_sca,
                         args.template_band, args.template_pointing, args.template_sca,
-                        galsim_config_file=galsim_config, out_dir=args.out_dir)
+                        galsim_config_file=galsim_config, temp_dir=args.temp_dir, out_dir=args.out_dir)
 
     pipeline.run()
 
