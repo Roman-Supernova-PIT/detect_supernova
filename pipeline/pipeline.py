@@ -33,8 +33,11 @@ class Detection:
 
     # Source detection config.
     SOURCE_EXTRACTOR_EXECUTABLE = "sex"
-    DETECTION_CONFIG = "default.sex"
-
+    DETECTION_CONFIG = os.path.join(os.path.dirname(__file__), "..", "configs", "default.sex")
+    DETECTION_PARA = os.path.join(os.path.dirname(__file__), "..", "configs", "default.param")
+    DETECTION_FILTER = os.path.join(os.path.dirname(__file__), "..", "configs", "default.conv")
+    
+    # Source Matching
     MATCH_RADIUS = 0.4 # in arcsec unit
 
     # file prefix
@@ -146,7 +149,8 @@ class Detection:
             print('[INFO] Processing detection')
             source_detection.detect(file_path['difference_image_path'], file_path['difference_detection_path'],
                                     source_extractor_executable=self.SOURCE_EXTRACTOR_EXECUTABLE,
-                                    detection_config=self.DETECTION_CONFIG)
+                                    detection_config=self.DETECTION_CONFIG,  detection_para=self.DETECTION_PARA,
+                                    detection_filter=self.DETECTION_FILTER)
             
             print('[INFO] Processing truth retrival')
             truth = self.__class__.retrieve_truth(file_path['science_image_path'], file_path['template_image_path'],
