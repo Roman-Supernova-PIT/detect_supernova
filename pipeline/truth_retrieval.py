@@ -42,6 +42,6 @@ def merge_science_and_template_truth(science_truth, template_truth, science_wcs,
     science_truth_new.loc[matched_id[matched_status], 'flux'] = science_truth_new.loc[matched_id[matched_status], 'flux'] - template_truth_matched.flux.to_numpy()
     
     merged_truth = pd.concat([science_truth_new, template_truth_unmatched]).reset_index(drop=True)
-    merged_truth = merged_truth.drop(['x', 'y', 'mag'], axis=1)
+    merged_truth = merged_truth.drop(['x', 'y'], axis=1)
     
     return merged_truth
