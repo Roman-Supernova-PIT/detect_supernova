@@ -1,6 +1,7 @@
 import logging
 import argparse
 import tempfile
+import atexit
 import os
 import pathlib
 import pandas as pd
@@ -120,11 +121,10 @@ class Detection:
         if self.temp_dir is None:
             temp_dir_obj = tempfile.TemporaryDirectory()
             temp_dir = pathlib.Path(temp_dir_obj.name)
-            remove_temp = True
+            atexit.register(temp_dir_obj.cleanup)
         else:
             temp_dir = pathlib.Path(self.temp_dir)
             os.makedirs(temp_dir, exist_ok=True)
-            remove_temp = False
             
         for i, row in self.data_records.iterrows():
             science_id = {'band': row['science_band'], 'pointing': row['science_pointing'], 'sca': row['science_sca']}
@@ -164,10 +164,6 @@ class Detection:
                 file_path['transients_to_detection_path'], file_path['detection_to_transients_path'])
             
             print("[INFO] Processing finished.")
-
-        # remove temporary directory
-        if remove_temp:
-            temp_dir_obj.cleanup()
             
     def run(self):
         os.makedirs(self.output_dir, exist_ok=True)
