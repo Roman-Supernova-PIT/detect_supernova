@@ -107,7 +107,7 @@ class Detection:
         file_path['difference_image_path'] = os.path.join(file_path['full_output_dir'], self.DIFF_IMAGE_PREFIX + diff_pattern + '.fits')
         # detection
         file_path['difference_detection_path'] = os.path.join(file_path['full_output_dir'], self.DIFF_DETECTION_PREFIX + diff_pattern + '.cat')
-        # truth retrival
+        # truth retrieval
         file_path['science_truth_path'] = self.INPUT_TRUTH_PATTERN.format(**science_id)
         file_path['template_truth_path'] = self.INPUT_TRUTH_PATTERN.format(**template_id)
         file_path['difference_truth_path'] = os.path.join(file_path['full_output_dir'], self.DIFF_TRUTH_PREFIX + diff_pattern + '.fits')
@@ -152,7 +152,7 @@ class Detection:
                                     detection_config=self.DETECTION_CONFIG,  detection_para=self.DETECTION_PARA,
                                     detection_filter=self.DETECTION_FILTER)
             
-            print('[INFO] Processing truth retrival')
+            print('[INFO] Processing truth retrieval')
             truth = self.__class__.retrieve_truth(file_path['science_image_path'], file_path['template_image_path'],
                                                   file_path['science_truth_path'], file_path['template_truth_path'],
                                                   file_path['difference_truth_path'])
@@ -166,13 +166,14 @@ class Detection:
             print("[INFO] Processing finished.")
             
     def run(self):
+        # create temporary directory
         os.makedirs(self.output_dir, exist_ok=True)
         self.run_helper()
 
          
 def main():
     parser = argparse.ArgumentParser('detection pipeline')
-    parser.add_argument( '-d', '--data-records', type=str, required=True, help="Input data records." )
+    parser.add_argument( '-d', '--data-records', type=str, required=True, help="Input file with data records." )
     parser.add_argument( '-t', '--temp-dir', default=None, help="Temporary directory." )
     parser.add_argument( '-o', '--output-dir', type=str, default='./output', help="Output directory." )
     args = parser.parse_args()
