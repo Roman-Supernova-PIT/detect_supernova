@@ -116,24 +116,14 @@ class Detection:
         file_path['detection_to_transients_path'] = os.path.join(file_path['full_output_dir'], self.DETECTION_TO_TRANSIENTS_PREFIX + diff_pattern + '.csv')
         return file_path
 
-    def run_helper(self):
-        # create temporary directory
-        if self.temp_dir is None:
-            temp_dir_obj = tempfile.TemporaryDirectory()
-            temp_dir = pathlib.Path(temp_dir_obj.name)
-            atexit.register(temp_dir_obj.cleanup)
-        else:
-            temp_dir = pathlib.Path(self.temp_dir)
-            os.makedirs(temp_dir, exist_ok=True)
-            
-        for i, row in self.data_records.iterrows():
-            science_id = {'band': row['science_band'], 'pointing': row['science_pointing'], 'sca': row['science_sca']}
-            template_id = {'band': row['template_band'], 'pointing': row['template_pointing'], 'sca': row['template_sca']}
+    def run_one_subtraction(self, science_band, science_pointing, science_sca, temp_dir):
+            science_id = {'band': science_band, 'pointing': science_pointing, 'sca': science_sca]}
+            template_id = {'band': template_band, 'pointing': template_pointing, 'sca': template_sca]}
             file_path = self.path_helper(science_id, template_id)
             
             print("[INFO] Processing started for data records "
-                          f"| Science ID {{ band: {science_id['band']}, pointing: {science_id['pointing']}, sca: {science_id['sca']} }} "
-                          f"| Template ID {{ band: {template_id['band']}, pointing: {template_id['pointing']}, sca: {template_id['sca']} }}.")
+                          f"| Science ID {science_id} "
+                          f"| Template ID {template_id} ")
 
             print('[INFO] Processing subtraction')
             subtract = subtraction.Pipeline(science_band=science_id['band'],
@@ -168,7 +158,17 @@ class Detection:
     def run(self):
         # create temporary directory
         os.makedirs(self.output_dir, exist_ok=True)
-        self.run_helper()
+        if self.temp_dir is None:
+            temp_dir_obj = tempfile.TemporaryDirectory()
+            temp_dir = pathlib.Path(temp_dir_obj.name)
+            atexit.register(temp_dir_obj.cleanup)
+        else:
+            temp_dir = pathlib.Path(self.temp_dir)
+            os.makedirs(temp_dir, exist_ok=True)
+
+        for i, row in self.data_records.iterrows():
+            run_one_subtraction(row["science_band"], row["science_pointing"], row["science_sca"],
+                                row["template_band"], row["template_pointing"], row["template_sca"], temp_dir=temp_dir)
 
          
 def main():
