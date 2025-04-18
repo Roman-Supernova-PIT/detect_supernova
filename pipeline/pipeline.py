@@ -116,9 +116,11 @@ class Detection:
         file_path['detection_to_transients_path'] = os.path.join(file_path['full_output_dir'], self.DETECTION_TO_TRANSIENTS_PREFIX + diff_pattern + '.csv')
         return file_path
 
-    def run_one_subtraction(self, science_band, science_pointing, science_sca, temp_dir):
-            science_id = {'band': science_band, 'pointing': science_pointing, 'sca': science_sca]}
-            template_id = {'band': template_band, 'pointing': template_pointing, 'sca': template_sca]}
+    def run_one_subtraction(self, science_band, science_pointing, science_sca,
+                            template_band, template_pointing, template_sca,
+                            temp_dir):
+            science_id = {'band': science_band, 'pointing': science_pointing, 'sca': science_sca}
+            template_id = {'band': template_band, 'pointing': template_pointing, 'sca': template_sca}
             file_path = self.path_helper(science_id, template_id)
             
             print("[INFO] Processing started for data records "
@@ -126,12 +128,12 @@ class Detection:
                           f"| Template ID {template_id} ")
 
             print('[INFO] Processing subtraction')
-            subtract = subtraction.Pipeline(science_band=science_id['band'],
-                                            science_pointing=science_id['pointing'],
-                                            science_sca=science_id['sca'],
-                                            template_band=template_id['band'],
-                                            template_pointing=template_id['pointing'],
-                                            template_sca=template_id['sca'],
+            subtract = subtraction.Pipeline(science_band=science_band,
+                                            science_pointing=science_pointing,
+                                            science_sca=science_sca,
+                                            template_band=template_band,
+                                            template_pointing=template_pointing,
+                                            template_sca=template_sca,
                                             temp_dir=temp_dir,
                                             out_dir=file_path['full_output_dir'])
             subtract.run()
@@ -156,8 +158,9 @@ class Detection:
             print("[INFO] Processing finished.")
             
     def run(self):
-        # create temporary directory
         os.makedirs(self.output_dir, exist_ok=True)
+
+        # create temporary directory
         if self.temp_dir is None:
             temp_dir_obj = tempfile.TemporaryDirectory()
             temp_dir = pathlib.Path(temp_dir_obj.name)
@@ -167,8 +170,8 @@ class Detection:
             os.makedirs(temp_dir, exist_ok=True)
 
         for i, row in self.data_records.iterrows():
-            run_one_subtraction(row["science_band"], row["science_pointing"], row["science_sca"],
-                                row["template_band"], row["template_pointing"], row["template_sca"], temp_dir=temp_dir)
+            self.run_one_subtraction(row["science_band"], row["science_pointing"], row["science_sca"],
+                                     row["template_band"], row["template_pointing"], row["template_sca"], temp_dir=temp_dir)
 
          
 def main():
