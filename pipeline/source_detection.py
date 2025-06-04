@@ -1,6 +1,6 @@
 import subprocess
 
-SOURCE_EXTRACTOR_EXECUTABLE = "sex"
+SOURCE_EXTRACTOR_EXECUTABLE = "source-extractor"
 DETECTION_CONFIG = "default.sex"
 DETECTION_PARA = "default.param"
 DETECTION_FILTER = "default.conv"

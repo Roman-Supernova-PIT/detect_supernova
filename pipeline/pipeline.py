@@ -33,7 +33,7 @@ class Detection:
     DIFF_PATTERN = '{science_band}_{science_pointing}_{science_sca}_-_{template_band}_{template_pointing}_{template_sca}'
 
     # Source detection config.
-    SOURCE_EXTRACTOR_EXECUTABLE = "sex"
+    SOURCE_EXTRACTOR_EXECUTABLE = "source-extractor"
     DETECTION_CONFIG = os.path.join(os.path.dirname(__file__), "..", "configs", "default.sex")
     DETECTION_PARA = os.path.join(os.path.dirname(__file__), "..", "configs", "default.param")
     DETECTION_FILTER = os.path.join(os.path.dirname(__file__), "..", "configs", "default.conv")
@@ -107,7 +107,7 @@ class Detection:
         file_path['difference_image_path'] = os.path.join(file_path['full_output_dir'], self.DIFF_IMAGE_PREFIX + diff_pattern + '.fits')
         # detection
         file_path['difference_detection_path'] = os.path.join(file_path['full_output_dir'], self.DIFF_DETECTION_PREFIX + diff_pattern + '.cat')
-        # truth retrival
+        # truth retrieval
         file_path['science_truth_path'] = self.INPUT_TRUTH_PATTERN.format(**science_id)
         file_path['template_truth_path'] = self.INPUT_TRUTH_PATTERN.format(**template_id)
         file_path['difference_truth_path'] = os.path.join(file_path['full_output_dir'], self.DIFF_TRUTH_PREFIX + diff_pattern + '.fits')
@@ -116,32 +116,24 @@ class Detection:
         file_path['detection_to_transients_path'] = os.path.join(file_path['full_output_dir'], self.DETECTION_TO_TRANSIENTS_PREFIX + diff_pattern + '.csv')
         return file_path
 
-    def run_helper(self):
-        # create temporary directory
-        if self.temp_dir is None:
-            temp_dir_obj = tempfile.TemporaryDirectory()
-            temp_dir = pathlib.Path(temp_dir_obj.name)
-            atexit.register(temp_dir_obj.cleanup)
-        else:
-            temp_dir = pathlib.Path(self.temp_dir)
-            os.makedirs(temp_dir, exist_ok=True)
-            
-        for i, row in self.data_records.iterrows():
-            science_id = {'band': row['science_band'], 'pointing': row['science_pointing'], 'sca': row['science_sca']}
-            template_id = {'band': row['template_band'], 'pointing': row['template_pointing'], 'sca': row['template_sca']}
+    def run_one_subtraction(self, science_band, science_pointing, science_sca,
+                            template_band, template_pointing, template_sca,
+                            temp_dir):
+            science_id = {'band': science_band, 'pointing': science_pointing, 'sca': science_sca}
+            template_id = {'band': template_band, 'pointing': template_pointing, 'sca': template_sca}
             file_path = self.path_helper(science_id, template_id)
             
             print("[INFO] Processing started for data records "
-                          f"| Science ID {{ band: {science_id['band']}, pointing: {science_id['pointing']}, sca: {science_id['sca']} }} "
-                          f"| Template ID {{ band: {template_id['band']}, pointing: {template_id['pointing']}, sca: {template_id['sca']} }}.")
+                          f"| Science ID {science_id} "
+                          f"| Template ID {template_id} ")
 
             print('[INFO] Processing subtraction')
-            subtract = subtraction.Pipeline(science_band=science_id['band'],
-                                            science_pointing=science_id['pointing'],
-                                            science_sca=science_id['sca'],
-                                            template_band=template_id['band'],
-                                            template_pointing=template_id['pointing'],
-                                            template_sca=template_id['sca'],
+            subtract = subtraction.Pipeline(science_band=science_band,
+                                            science_pointing=science_pointing,
+                                            science_sca=science_sca,
+                                            template_band=template_band,
+                                            template_pointing=template_pointing,
+                                            template_sca=template_sca,
                                             temp_dir=temp_dir,
                                             out_dir=file_path['full_output_dir'])
             subtract.run()
@@ -152,7 +144,7 @@ class Detection:
                                     detection_config=self.DETECTION_CONFIG,  detection_para=self.DETECTION_PARA,
                                     detection_filter=self.DETECTION_FILTER)
             
-            print('[INFO] Processing truth retrival')
+            print('[INFO] Processing truth retrieval')
             truth = self.__class__.retrieve_truth(file_path['science_image_path'], file_path['template_image_path'],
                                                   file_path['science_truth_path'], file_path['template_truth_path'],
                                                   file_path['difference_truth_path'])
@@ -167,12 +159,24 @@ class Detection:
             
     def run(self):
         os.makedirs(self.output_dir, exist_ok=True)
-        self.run_helper()
+
+        # create temporary directory
+        if self.temp_dir is None:
+            temp_dir_obj = tempfile.TemporaryDirectory()
+            temp_dir = pathlib.Path(temp_dir_obj.name)
+            atexit.register(temp_dir_obj.cleanup)
+        else:
+            temp_dir = pathlib.Path(self.temp_dir)
+            os.makedirs(temp_dir, exist_ok=True)
+
+        for i, row in self.data_records.iterrows():
+            self.run_one_subtraction(row["science_band"], row["science_pointing"], row["science_sca"],
+                                     row["template_band"], row["template_pointing"], row["template_sca"], temp_dir=temp_dir)
 
          
 def main():
     parser = argparse.ArgumentParser('detection pipeline')
-    parser.add_argument( '-d', '--data-records', type=str, required=True, help="Input data records." )
+    parser.add_argument( '-d', '--data-records', type=str, required=True, help="Input file with data records." )
     parser.add_argument( '-t', '--temp-dir', default=None, help="Temporary directory." )
     parser.add_argument( '-o', '--output-dir', type=str, default='./output', help="Output directory." )
     args = parser.parse_args()
