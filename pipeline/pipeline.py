@@ -33,7 +33,7 @@ class Detection:
     DIFF_PATTERN = '{science_band}_{science_pointing}_{science_sca}_-_{template_band}_{template_pointing}_{template_sca}'
 
     # Source detection config.
-    SOURCE_EXTRACTOR_EXECUTABLE = "sex"
+    SOURCE_EXTRACTOR_EXECUTABLE = "source-extractor"
     DETECTION_CONFIG = os.path.join(os.path.dirname(__file__), "..", "configs", "default.sex")
     DETECTION_PARA = os.path.join(os.path.dirname(__file__), "..", "configs", "default.param")
     DETECTION_FILTER = os.path.join(os.path.dirname(__file__), "..", "configs", "default.conv")
