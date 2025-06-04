@@ -4,7 +4,9 @@ The supernova detection pipeline for the Roman Supernova Project Infrastructure 
 
 ## Setup
 
-This package is compatible with the default environment of Perlmutter on NERSC.
+This package is compatible with the default Roman Supernova PIT environment:
+
+https://github.com/Roman-Supernova-PIT/environment/tree/main
 
 ## Workflow 
 <img src="pipeline/workflow.png" alt="Workflow of the detection pipeline." style="width:800px; height:auto;">
@@ -13,7 +15,7 @@ This package is compatible with the default environment of Perlmutter on NERSC.
   ```
   | science_band | science_pointing | science_sca | template_band | template_pointing | template_sca |
   ```
-- Subtractoin: Perform image difference using [SFFT](https://github.com/thomasvrussell/sfft) algorithm.
+- Subtraction: Perform image difference using [SFFT](https://github.com/thomasvrussell/sfft) algorithm.
 - Detection: Perform source detection using [Source-Extractor](https://sextractor.readthedocs.io/en/latest/Introduction.html).
 - Truth Retrieval: Retrieve truth tables of the science image and template image.
 - Truth Matching: Match the truth information to the detected sources for evaluating efficiency. Match the detected sources to truth for evaluating purity.
