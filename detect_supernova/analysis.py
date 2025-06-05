@@ -1,4 +1,6 @@
+import numpy as np
 from scipy.stats import sigmaclip
+
 
 def estimate_background(array, low=5.0, high=5.0):
     array = [~np.isnan(array)]
