@@ -9,7 +9,7 @@ This package is compatible with the default Roman Supernova PIT environment:
 https://github.com/Roman-Supernova-PIT/environment
 
 ## Workflow 
-<img src="pipeline/workflow.png" alt="Workflow of the detection pipeline." style="width:800px; height:auto;">
+<img src="workflow.png" alt="Workflow of the detection pipeline." style="width:800px; height:auto;">
 
 - Input: The pipeline takes a `csv` file with 6 requred columns. They will be used as data ids to identify science and template images. During running, the pipeline will loop over each row to perform image difference, source detection, truth retrieval, and truth matching.
   ```
