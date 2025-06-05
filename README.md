@@ -6,7 +6,7 @@ The supernova detection pipeline for the Roman Supernova Project Infrastructure 
 
 This package is compatible with the default Roman Supernova PIT environment:
 
-https://github.com/Roman-Supernova-PIT/environment/tree/main
+https://github.com/Roman-Supernova-PIT/environment
 
 ## Workflow 
 <img src="pipeline/workflow.png" alt="Workflow of the detection pipeline." style="width:800px; height:auto;">
