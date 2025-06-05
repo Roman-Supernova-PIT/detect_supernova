@@ -44,7 +44,9 @@ class Detection:
         + "/RomanTDS/truth/{band}/{pointing}/Roman_TDS_index_{band}_{pointing}_{sca}.txt"
     )
 
-    DIFF_PATTERN = "{science_band}_{science_pointing}_{science_sca}_-_{template_band}_{template_pointing}_{template_sca}"
+    DIFF_PATTERN = (
+        "{science_band}_{science_pointing}_{science_sca}_-_{template_band}_{template_pointing}_{template_sca}"
+    )
 
     # Source detection config.
     SOURCE_EXTRACTOR_EXECUTABLE = "source-extractor"
