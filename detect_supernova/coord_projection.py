@@ -1,6 +1,7 @@
 import numpy as np
-import astropy.units as u
+
 from astropy.coordinates import SkyCoord, match_coordinates_sky
+import astropy.units as u
 from astropy.wcs.utils import skycoord_to_pixel, pixel_to_skycoord
 
 

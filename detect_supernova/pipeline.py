@@ -1,16 +1,19 @@
 import argparse
-import tempfile
 import atexit
 import os
 import pathlib
+import tempfile
+
 import pandas as pd
+
 from astropy.coordinates import SkyCoord
 from astropy.wcs.utils import pixel_to_skycoord
-import truth_retrieval
+
 import data_loader
 import subtraction
 import source_detection
 import truth_matching
+import truth_retrieval
 
 
 class Detection:

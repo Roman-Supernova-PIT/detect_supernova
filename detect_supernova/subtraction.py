@@ -1,17 +1,19 @@
-import io
-import shutil
-import os
-import pathlib
 import argparse
 from dataclasses import dataclass
 import gzip
-from astropy.io import fits
+import io
+import os
+import pathlib
+import shutil
+
 import numpy as np
+
+from astropy.io import fits
 import cupy as cp
+
 from sfft.SpaceSFFTCupyFlow import SpaceSFFT_CupyFlow
 from roman_imsim.utils import roman_utils
 from sfft.utils.SExSkySubtract import SEx_SkySubtract
-
 
 INPUT_IMAGE_PATTERN = "RomanTDS/images/simple_model/{band}/{pointing}/Roman_TDS_simple_model_{band}_{pointing}_{sca}.fits.gz"
 INPUT_TRUTH_PATTERN = (

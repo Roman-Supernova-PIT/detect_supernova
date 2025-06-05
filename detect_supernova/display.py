@@ -1,5 +1,6 @@
-import numpy as np
 from matplotlib.patches import Circle
+import numpy as np
+
 from astropy.visualization import ZScaleInterval
 
 

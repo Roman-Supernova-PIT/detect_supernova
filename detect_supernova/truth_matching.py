@@ -1,5 +1,6 @@
-from coord_projection import two_direction_skymatch
 import astropy.units as u
+
+from coord_projection import two_direction_skymatch
 
 MATCH_RADIUS = 0.4
 
