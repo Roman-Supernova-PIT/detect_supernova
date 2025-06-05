@@ -71,8 +71,9 @@ class Exposure:
                 self.image_path, hdu_id=self.hdu_id
             )
             self._shape = self._image.shape
+        # Remove the noqa once MWV traces down where load_shape.
         if fetch_source:
-            self._source = load_source(self.source_path)
+            self._source = load_source(self.source_path)  # noqa
 
     def __repr__(self):
         return f"Exposure(image={type(self._image)}, wcs={type(self._wcs)})"
@@ -120,8 +121,9 @@ class Exposure:
     def _load_shape(self):
         self._shape = load_shape(self.image_path, hdu_id=self.hdu_id)
 
+    # Remove the noqa once MWV traces down where load_shape.
     def _load_source(self):
-        self._source = load_source(self.source_path)
+        self._source = load_source(self.source_path)  # noqa
 
 
 class RomanExposure(Exposure):
