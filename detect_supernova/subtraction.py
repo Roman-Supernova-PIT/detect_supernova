@@ -90,7 +90,7 @@ def sky_subtract(
     else:
         decompressed_path = inpath
 
-    (SKYDIP, SKYPEAK, PixA_skysub, PixA_sky, PixA_skyrms) = SEx_SkySubtract.SSS(
+    _, _, _, _, PixA_skyrms = SEx_SkySubtract.SSS(
         FITS_obj=decompressed_path,
         FITS_skysub=skysubpath,
         FITS_detmask=detmaskpath,
@@ -169,7 +169,8 @@ class Pipeline:
         self.temp_dir = temp_dir
         self.out_dir = pathlib.Path(out_dir)
 
-        # science_info and template_info contains the data_ids of images and paths of temporary files (sky subtracted images, detection masks, psfs)
+        # science_info and template_info contains the data_ids of images and paths of temporary files:
+        #   (sky subtracted images, detection masks, psfs)
         self.science_info = ImageInfo(
             {"band": science_band, "pointing": science_pointing, "sca": science_sca},
             self.temp_dir,

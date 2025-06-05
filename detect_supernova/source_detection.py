@@ -33,3 +33,5 @@ def detect(
         save_path,
     ]
     result = subprocess.run(detection_cmd, capture_output=True, text=True)
+
+    return result

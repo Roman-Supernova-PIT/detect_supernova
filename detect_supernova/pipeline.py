@@ -236,7 +236,7 @@ class Detection:
         )
 
         print("[INFO] Processing truth matching")
-        transients_to_detection, detection_to_transients = (
+        _, _ = (
             self.__class__.match_transients(
                 truth,
                 file_path["difference_image_path"],
