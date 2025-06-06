@@ -35,3 +35,13 @@ def detect(
     result = subprocess.run(detection_cmd, capture_output=True, text=True)
 
     return result
+
+def score_image_detect()
+    """
+    Detect based on a score image.  Peak pixels.
+
+    This is equivalent to doing PSF convolution on a direct image and looking for peaks.
+
+    Use astropy.photutils
+    """
+    pass
