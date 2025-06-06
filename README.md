@@ -25,10 +25,12 @@ https://github.com/Roman-Supernova-PIT/environment
 
 To run the detection pipeline, run the following code in `detect_supernova` repo of the terminal.
 ```
-python pipeline/pipeline.py -d [path of the input file] -o [output directory]
+python detect_supernova/pipeline.py -d [path of the input file] -o [output directory]
 ```
 
 E.g.,
 ```
-python detect_supernova/pipeline/pipeline.py -d detect_supernova/test/test_one_data_record.csv -o dia_out_dir
+python detect_supernova/pipeline.py -d test/test_one_data_record.csv -o /dia_out_dir
 ```
+
+Note the `/dia_out_dir` only makes sense because we're running in the podman container, where we have bound /dia_out_dir to an output directory.
