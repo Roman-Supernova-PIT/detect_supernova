@@ -250,6 +250,14 @@ class Pipeline:
         _, templ_detmask = load_fits_to_cp(
             self.template_info.detmask_path, return_hdr=False
         )
+        # 2025-06-06 MWV:
+        # In principle need to get the actual variance
+        # But SFFT renormalize the score image to the sky background variance
+        # So at this point this is fine.
+        # Eventually you could imagine wanting to do the variance correctly
+        # for sources.
+        sci_var = np.zeros_like(sci_data)
+        templ_var = np.zeros_like(templ_data)
 
         # cupy flow
         sfftifier = SpaceSFFT_CupyFlow(
@@ -259,6 +267,8 @@ class Pipeline:
             templ_skyrms,
             sci_data,
             templ_data,
+            sci_var,
+            templ_var,
             sci_detmask,
             templ_detmask,
             sci_psf,
@@ -268,8 +278,13 @@ class Pipeline:
         sfftifier.resampling_image_mask_psf()
         sfftifier.cross_convolution()
         sfftifier.sfft_subtraction()
-        sfftifier.create_score_image()
         sfftifier.find_decorrelation()
+
+        # create_score_image has to come after find_decorrelation
+        # because the create_score_image uses FKDECO_GPU
+        # which is calculated in find_decorrelation
+        # and saved as attribute of instance
+        sfftifier.create_score_image()
 
         # run decorrelation
         decorr_diff = sfftifier.apply_decorrelation(sfftifier.PixA_DIFF_GPU)
