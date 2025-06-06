@@ -294,7 +294,7 @@ class Pipeline:
         # save data products
         fits.writeto(
             self.score_image_path,
-            cp.asnumpy(score_image),
+            cp.asnumpy(score_image).T,
             header=sfftifier.hdr_target,
             overwrite=True,
         )
