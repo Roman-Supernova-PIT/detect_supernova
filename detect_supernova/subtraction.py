@@ -284,7 +284,7 @@ class Pipeline:
         # because the create_score_image uses FKDECO_GPU
         # which is calculated in find_decorrelation
         # and saved as attribute of instance
-        sfftifier.create_score_image()
+        score_image = sfftifier.create_score_image()
 
         # run decorrelation
         decorr_diff = sfftifier.apply_decorrelation(sfftifier.PixA_DIFF_GPU)
@@ -294,7 +294,7 @@ class Pipeline:
         # save data products
         fits.writeto(
             self.score_image_path,
-            cp.asnumpy(),
+            cp.asnumpy(score_image),
             header=sfftifier.hdr_target,
             overwrite=True,
         )
