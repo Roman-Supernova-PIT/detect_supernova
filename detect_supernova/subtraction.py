@@ -187,8 +187,9 @@ class Pipeline:
             f"{self.science_info.data_id['band']}_{self.science_info.data_id['pointing']}_{self.science_info.data_id['sca']}"
             f"_-_{self.template_info.data_id['band']}_{self.template_info.data_id['pointing']}_{self.template_info.data_id['sca']}"
         )
-        self.decoor_diff_path = self.out_dir / f"decorr_diff_{self.diff_pattern}.fits"
-        self.decoor_zptimg_path = (
+        self.score_image_path = self.out_dir / f"score_{self.diff_pattern}.fits"
+        self.decorr_diff_path = self.out_dir / f"decorr_diff_{self.diff_pattern}.fits"
+        self.decorr_zptimg_path = (
             self.out_dir / f"decorr_zptimg_{self.diff_pattern}.fits"
         )
         self.decorr_psf_path = self.out_dir / f"decorr_psf_{self.diff_pattern}.fits"
@@ -264,16 +265,10 @@ class Pipeline:
             templ_psf,
         )
 
-        # resampling
         sfftifier.resampling_image_mask_psf()
-
-        # cross-convolution
         sfftifier.cross_convolution()
-
-        # subtraction
         sfftifier.sfft_subtraction()
-
-        # find decorrelation
+        sfftifier.create_score_image()
         sfftifier.find_decorrelation()
 
         # run decorrelation
@@ -283,13 +278,19 @@ class Pipeline:
 
         # save data products
         fits.writeto(
-            self.decoor_diff_path,
+            self.score_image_path,
+            cp.asnumpy(),
+            header=sfftifier.hdr_target,
+            overwrite=True,
+        )
+        fits.writeto(
+            self.decorr_diff_path,
             cp.asnumpy(decorr_diff).T,
             header=sfftifier.hdr_target,
             overwrite=True,
         )
         fits.writeto(
-            self.decoor_zptimg_path,
+            self.decorr_zptimg_path,
             cp.asnumpy(decorr_zptimg).T,
             header=sfftifier.hdr_target,
             overwrite=True,
