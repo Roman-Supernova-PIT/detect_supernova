@@ -42,7 +42,7 @@ def detect(
 
 
 def score_image_detect(
-    score_image_path, catalog_save_path=None, threshold=10, box_size=11, negative=True
+    score_image_path, catalog_save_path=None, threshold=10, box_size=11, negative=True, overwrite=True,
 ):
     """Detect based on the peak pixels in the score image.
 
@@ -56,6 +56,8 @@ def score_image_detect(
         Size of box in which to look for unique peaks.  Passed to photutils.find_peaks.
     negative : bool
         Search for negative sources as well as positive sources.
+    overwrite : bool
+        Overwrite existing catalog_save_path
 
     Returns
     -------
@@ -82,6 +84,6 @@ def score_image_detect(
     obj = vstack([pos_obj, neg_obj])
 
     if catalog_save_path is not None:
-        obj.write(catalog_save_path)
+        obj.write(catalog_save_path, overwrite=overwrite)
 
     return obj
