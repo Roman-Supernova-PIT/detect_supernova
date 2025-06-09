@@ -79,7 +79,7 @@ def score_image_detect(
     neg_obj = find_peaks(-image, threshold=threshold, box_size=box_size)
     neg_obj["peak_value"] = -neg_obj["peak_value"]
 
-    obj = vstack(pos_obj, neg_obj)
+    obj = vstack([pos_obj, neg_obj])
 
     if catalog_save_path is not None:
         obj.write(catalog_save_path)
