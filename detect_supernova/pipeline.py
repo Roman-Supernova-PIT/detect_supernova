@@ -285,8 +285,8 @@ class Detection:
             file_path["difference_image_path"],
             file_path["score_image_detection_path"],
             self.MATCH_RADIUS,
-            file_path["transients_to_score_image_detection_path"],
-            file_path["score_image_detection_to_transients_path"],
+            file_path["transients_to_score_detection_path"],
+            file_path["score_detection_to_transients_path"],
         )
 
         print("[INFO] Processing finished.")
