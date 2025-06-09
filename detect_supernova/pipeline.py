@@ -230,9 +230,9 @@ class Detection:
 
         print("[INFO] Processing score image detection")
         source_detection.score_image_detect(
-                                            file_path["score_image_path"],
-                                            file_path["score_image_detection_path"],
-                                            )
+            file_path["score_image_path"],
+            file_path["score_image_detection_path"],
+        )
 
         print("[INFO] Processing truth retrieval")
         truth = self.__class__.retrieve_truth(

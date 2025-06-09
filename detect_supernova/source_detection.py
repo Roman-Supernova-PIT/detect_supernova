@@ -41,13 +41,36 @@ def detect(
     return result
 
 
-def score_image_detect(score_image_path, catalog_save_path=None, threshold=10, box_size=11):
+def score_image_detect(
+    score_image_path, catalog_save_path=None, threshold=10, box_size=11, negative=True
+):
     """
     Detect based on the peak pixels in the score image.
 
-    This is equivalent to doing PSF convolution on a direct image and looking for peaks.
+    Parameters
+    ----------
+    score_image_path : str
+        Path to score image
+    threshold : float
+        Signal-to-noise ratio threshold.
+    box_size : int
+        Size of box in which to look for unique peaks.  Passed to photutils.find_peaks.
+    negative : bool
+        Search for negative sources as well as positive sources.
 
-    Use astropy.photutils
+    Returns
+    -------
+    AstroPy Table of results
+
+    Notes
+    -----
+    This is equivalent to doing PSF convolution on a direct image,
+    dividing by the variance, and looking for significant peaks.
+
+    The searches for positive and negative sources run separately,
+    and thus a positive source and a negative source can be found within the same box_size region.
+
+    Uses astropy.photutils
 
     Based on
     https://photutils.readthedocs.io/en/stable/user_guide/detection.html
@@ -55,7 +78,7 @@ def score_image_detect(score_image_path, catalog_save_path=None, threshold=10, b
     image = fits.getdata(score_image_path)
     pos_obj = find_peaks(image, threshold=threshold, box_size=box_size)
     neg_obj = find_peaks(-image, threshold=threshold, box_size=box_size)
-    neg_obj["peak_value"] = - neg_obj["peak_value"]
+    neg_obj["peak_value"] = -neg_obj["peak_value"]
 
     obj = vstack(pos_obj, neg_obj)
 
