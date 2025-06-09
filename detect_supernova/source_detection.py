@@ -1,5 +1,9 @@
 import subprocess
 
+from astropy.io import fits
+from astropy.table import vstack
+from photutils.detection import find_peaks
+
 SOURCE_EXTRACTOR_EXECUTABLE = "source-extractor"
 DETECTION_CONFIG = "default.sex"
 DETECTION_PARA = "default.param"
@@ -36,12 +40,26 @@ def detect(
 
     return result
 
-def score_image_detect()
+
+def score_image_detect(score_image_path, catalog_save_path=None, threshold=10, box_size=11):
     """
-    Detect based on a score image.  Peak pixels.
+    Detect based on the peak pixels in the score image.
 
     This is equivalent to doing PSF convolution on a direct image and looking for peaks.
 
     Use astropy.photutils
+
+    Based on
+    https://photutils.readthedocs.io/en/stable/user_guide/detection.html
     """
-    pass
+    image = fits.getdata(score_image_path)
+    pos_obj = find_peaks(image, threshold=threshold, box_size=box_size)
+    neg_obj = find_peaks(-image, threshold=threshold, box_size=box_size)
+    neg_obj["peak_value"] = - neg_obj["peak_value"]
+
+    obj = vstack(pos_obj, neg_obj)
+
+    if catalog_save_path is not None:
+        obj.write(catalog_save_path)
+
+    return obj
