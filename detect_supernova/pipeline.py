@@ -44,9 +44,7 @@ class Detection:
         + "/RomanTDS/truth/{band}/{pointing}/Roman_TDS_index_{band}_{pointing}_{sca}.txt"
     )
 
-    DIFF_PATTERN = (
-        "{science_band}_{science_pointing}_{science_sca}_-_{template_band}_{template_pointing}_{template_sca}"
-    )
+    DIFF_PATTERN = "{science_band}_{science_pointing}_{science_sca}_-_{template_band}_{template_pointing}_{template_sca}"
 
     # Source detection config.
     SOURCE_EXTRACTOR_EXECUTABLE = "source-extractor"
@@ -65,10 +63,14 @@ class Detection:
 
     # file prefix
     DIFF_IMAGE_PREFIX = "decorr_diff_"
+    DIFF_SCORE_PREFIX = "score_"
     DIFF_DETECTION_PREFIX = "detection_"
+    DIFF_SCORE_DETECTION_PREFIX = "score_detection_"
     DIFF_TRUTH_PREFIX = "truth_"
     TRANSIENTS_TO_DETECTION_PREFIX = "transients_to_detection_"
     DETECTION_TO_TRANSIENTS_PREFIX = "detection_to_transients_"
+    TRANSIENTS_TO_SCORE_DETECTION_PREFIX = "transients_to_score_detection_"
+    SCORE_DETECTION_TO_TRANSIENTS_PREFIX = "score_detection_to_transients_"
 
     def __init__(self, data_records_path, temp_dir=None, output_dir="./output"):
         self.data_records_path = data_records_path
@@ -157,6 +159,20 @@ class Detection:
             file_path["full_output_dir"],
             self.DIFF_DETECTION_PREFIX + diff_pattern + ".cat",
         )
+        file_path["score_image_path"] = os.path.join(
+            file_path["full_output_dir"],
+            self.DIFF_SCORE_PREFIX + diff_pattern + ".fits",
+        )
+        # diff score image detection
+        file_path["score_image_detection_path"] = os.path.join(
+            file_path["full_output_dir"],
+            self.SCORE_DETECTION_PREFIX + diff_pattern + ".ecsv",
+        )
+        # decorr diff image detection
+        file_path["difference_detection_path"] = os.path.join(
+            file_path["full_output_dir"],
+            self.DIFF_DETECTION_PREFIX + diff_pattern + ".cat",
+        )
         # truth retrieval
         file_path["science_truth_path"] = self.INPUT_TRUTH_PATTERN.format(**science_id)
         file_path["template_truth_path"] = self.INPUT_TRUTH_PATTERN.format(
@@ -174,6 +190,14 @@ class Detection:
         file_path["detection_to_transients_path"] = os.path.join(
             file_path["full_output_dir"],
             self.DETECTION_TO_TRANSIENTS_PREFIX + diff_pattern + ".csv",
+        )
+        file_path["transients_to_score_detection_path"] = os.path.join(
+            file_path["full_output_dir"],
+            self.TRANSIENTS_TO_SCORE_DETECTION_PREFIX + diff_pattern + ".csv",
+        )
+        file_path["score_detection_to_transients_path"] = os.path.join(
+            file_path["full_output_dir"],
+            self.SCORE_DETECTION_TO_TRANSIENTS_PREFIX + diff_pattern + ".csv",
         )
         return file_path
 
@@ -243,16 +267,24 @@ class Detection:
             file_path["difference_truth_path"],
         )
 
-        print("[INFO] Processing truth matching")
-        _, _ = (
-            self.__class__.match_transients(
-                truth,
-                file_path["difference_image_path"],
-                file_path["difference_detection_path"],
-                self.MATCH_RADIUS,
-                file_path["transients_to_detection_path"],
-                file_path["detection_to_transients_path"],
-            )
+        print("[INFO] Processing diffim detection truth matching")
+        _, _ = self.__class__.match_transients(
+            truth,
+            file_path["difference_image_path"],
+            file_path["difference_detection_path"],
+            self.MATCH_RADIUS,
+            file_path["transients_to_detection_path"],
+            file_path["detection_to_transients_path"],
+        )
+
+        print("[INFO] Processing score image detection truth matching")
+        _, _ = self.__class__.match_transients(
+            truth,
+            file_path["difference_image_path"],
+            file_path["score_image_detection_path"],
+            self.MATCH_RADIUS,
+            file_path["transients_to_score_image_detection_path"],
+            file_path["score_image_detection_to_transients_path"],
         )
 
         print("[INFO] Processing finished.")
