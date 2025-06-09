@@ -44,8 +44,7 @@ def detect(
 def score_image_detect(
     score_image_path, catalog_save_path=None, threshold=10, box_size=11, negative=True
 ):
-    """
-    Detect based on the peak pixels in the score image.
+    """Detect based on the peak pixels in the score image.
 
     Parameters
     ----------

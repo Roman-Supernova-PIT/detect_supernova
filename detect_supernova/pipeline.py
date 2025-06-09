@@ -44,7 +44,9 @@ class Detection:
         + "/RomanTDS/truth/{band}/{pointing}/Roman_TDS_index_{band}_{pointing}_{sca}.txt"
     )
 
-    DIFF_PATTERN = "{science_band}_{science_pointing}_{science_sca}_-_{template_band}_{template_pointing}_{template_sca}"
+    DIFF_PATTERN = (
+        "{science_band}_{science_pointing}_{science_sca}_-_{template_band}_{template_pointing}_{template_sca}"
+    )
 
     # Source detection config.
     SOURCE_EXTRACTOR_EXECUTABLE = "source-extractor"
@@ -65,7 +67,7 @@ class Detection:
     DIFF_IMAGE_PREFIX = "decorr_diff_"
     DIFF_SCORE_PREFIX = "score_"
     DIFF_DETECTION_PREFIX = "detection_"
-    DIFF_SCORE_DETECTION_PREFIX = "score_detection_"
+    SCORE_DETECTION_PREFIX = "score_detection_"
     DIFF_TRUTH_PREFIX = "truth_"
     TRANSIENTS_TO_DETECTION_PREFIX = "transients_to_detection_"
     DETECTION_TO_TRANSIENTS_PREFIX = "detection_to_transients_"
