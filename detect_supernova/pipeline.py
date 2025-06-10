@@ -114,6 +114,30 @@ class Detection:
         x_col="X_IMAGE",
         y_col="Y_IMAGE",
     ):
+        """Match a truth catalog to subtraction detection catalogs
+
+        Parameter
+        ---------
+        truth : pandas dataframe
+        difference_image_path : str
+        difference_detection_path : str
+        match_radius : float
+            Match radius in arcseconds
+        transients_to_detection_path : str
+        detection_to_transients_path : str
+        transient_frame : str
+            AstroPy coordinate frame.  E.g., "icrs" or "fk5"
+        x_col : str
+            Name of column in detection table for x coordinate
+        y_col
+            Name of column in detection table for y coordinate
+
+        Return
+        ------
+        (astropy.table.Table, astropy.table.Table) :
+            truth matched to detections,
+            detections matched to truth
+        """
         difference_wcs = data_loader.load_wcs(difference_image_path, hdu_id=0)
 
         detection = data_loader.load_table(difference_detection_path)
