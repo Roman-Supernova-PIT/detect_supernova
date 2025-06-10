@@ -2,6 +2,7 @@ import subprocess
 
 from astropy.io import fits
 from astropy.table import vstack
+from photutils.centroids import centroid_com
 from photutils.detection import find_peaks
 
 SOURCE_EXTRACTOR_EXECUTABLE = "source-extractor"
@@ -77,8 +78,9 @@ def score_image_detect(
     https://photutils.readthedocs.io/en/stable/user_guide/detection.html
     """
     image = fits.getdata(score_image_path)
-    pos_obj = find_peaks(image, threshold=threshold, box_size=box_size)
-    neg_obj = find_peaks(-image, threshold=threshold, box_size=box_size)
+    find_peaks_kwargs = {"threshold": threshold, "box_size": box_size, "centroid_func": centroid_com}
+    pos_obj = find_peaks(image, **find_peaks_kwargs)
+    neg_obj = find_peaks(-image, **find_peaks_kwargs)
     neg_obj["peak_value"] = -neg_obj["peak_value"]
 
     obj = vstack([pos_obj, neg_obj])
