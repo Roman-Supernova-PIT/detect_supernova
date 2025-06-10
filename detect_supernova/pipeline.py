@@ -110,16 +110,19 @@ class Detection:
         match_radius,
         transients_to_detection_path,
         detection_to_transients_path,
+        transient_frame="icrs",
+        x_col="X_IMAGE",
+        y_col="Y_IMAGE",
     ):
         difference_wcs = data_loader.load_wcs(difference_image_path, hdu_id=0)
 
         detection = data_loader.load_table(difference_detection_path)
         transients = truth[truth.obj_type == "transient"].copy().reset_index(drop=True)
         transients_skycoord = SkyCoord(
-            transients.ra, transients.dec, frame="icrs", unit="deg"
+            transients.ra, transients.dec, frame=transient_frame, unit="deg"
         )
         detection_skycoord = pixel_to_skycoord(
-            detection.X_IMAGE, detection.Y_IMAGE, difference_wcs
+            detection[x_col], detection[y_col], difference_wcs
         )
         transients_to_detection = truth_matching.skymatch_and_join(
             transients, detection, transients_skycoord, detection_skycoord, match_radius
@@ -277,6 +280,8 @@ class Detection:
             self.MATCH_RADIUS,
             file_path["transients_to_detection_path"],
             file_path["detection_to_transients_path"],
+            x_col="X_IMAGE",
+            y_col="Y_IMAGE",
         )
 
         print("[INFO] Processing score image detection truth matching")
@@ -287,6 +292,8 @@ class Detection:
             self.MATCH_RADIUS,
             file_path["transients_to_score_detection_path"],
             file_path["score_detection_to_transients_path"],
+            x_col="x_peak",
+            y_col="y_peak",
         )
 
         print("[INFO] Processing finished.")
