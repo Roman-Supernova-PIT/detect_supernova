@@ -4,9 +4,15 @@ The supernova detection pipeline for the Roman Supernova Project Infrastructure 
 
 ## Setup
 
-This package is compatible with the default Roman Supernova PIT environment:
+This package is compatible with the phrosty environment:
 
-https://github.com/Roman-Supernova-PIT/environment
+https://github.com/Roman-Supernova-PIT/phrosty/tree/main/examples/perlmutter
+
+Please follow the instructions up to the following line before running detect_supernova:
+
+```
+[2025-01-07 18:30:05 - phrosty - INFO] Results saved to /lc_out_dir/data/20172782/20172782_R062_all.csv
+```
 
 ## Workflow 
 <img src="workflow.png" alt="Workflow of the detection pipeline." style="width:800px; height:auto;">
