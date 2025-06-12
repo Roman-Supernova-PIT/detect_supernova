@@ -66,11 +66,13 @@ def score_image_detect(
 
     Notes
     -----
-    This is equivalent to doing PSF convolution on a direct image,
-    dividing by the variance, and looking for significant peaks.
+    The score image for a subtraction is the equivalent of cross-correlating a
+    direct image with its PSF and dividing by the variance.  We then look for
+    for significant peaks to identiy sources.
 
     The searches for positive and negative sources run separately,
-    and thus a positive source and a negative source can be found within the same box_size region.
+    and thus a positive source and a negative source can be found within the
+    same box_size region.
 
     Uses astropy.photutils
 
