@@ -1,0 +1,1 @@
+Create detection catalog based on SFFT Score image.

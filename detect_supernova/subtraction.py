@@ -187,8 +187,9 @@ class Pipeline:
             f"{self.science_info.data_id['band']}_{self.science_info.data_id['pointing']}_{self.science_info.data_id['sca']}"
             f"_-_{self.template_info.data_id['band']}_{self.template_info.data_id['pointing']}_{self.template_info.data_id['sca']}"
         )
-        self.decoor_diff_path = self.out_dir / f"decorr_diff_{self.diff_pattern}.fits"
-        self.decoor_zptimg_path = (
+        self.score_image_path = self.out_dir / f"score_{self.diff_pattern}.fits"
+        self.decorr_diff_path = self.out_dir / f"decorr_diff_{self.diff_pattern}.fits"
+        self.decorr_zptimg_path = (
             self.out_dir / f"decorr_zptimg_{self.diff_pattern}.fits"
         )
         self.decorr_psf_path = self.out_dir / f"decorr_psf_{self.diff_pattern}.fits"
@@ -249,6 +250,14 @@ class Pipeline:
         _, templ_detmask = load_fits_to_cp(
             self.template_info.detmask_path, return_hdr=False
         )
+        # 2025-06-06 MWV:
+        # In principle need to get the actual variance
+        # But SFFT renormalize the score image to the sky background variance
+        # So at this point this is fine.
+        # Eventually you could imagine wanting to do the variance correctly
+        # for sources.
+        sci_var = np.zeros_like(sci_data)
+        templ_var = np.zeros_like(templ_data)
 
         # cupy flow
         sfftifier = SpaceSFFT_CupyFlow(
@@ -258,23 +267,24 @@ class Pipeline:
             templ_skyrms,
             sci_data,
             templ_data,
+            sci_var,
+            templ_var,
             sci_detmask,
             templ_detmask,
             sci_psf,
             templ_psf,
         )
 
-        # resampling
         sfftifier.resampling_image_mask_psf()
-
-        # cross-convolution
         sfftifier.cross_convolution()
-
-        # subtraction
         sfftifier.sfft_subtraction()
-
-        # find decorrelation
         sfftifier.find_decorrelation()
+
+        # create_score_image has to come after find_decorrelation
+        # because the create_score_image uses FKDECO_GPU
+        # which is calculated in find_decorrelation
+        # and saved as attribute of instance
+        score_image = sfftifier.create_score_image()
 
         # run decorrelation
         decorr_diff = sfftifier.apply_decorrelation(sfftifier.PixA_DIFF_GPU)
@@ -283,13 +293,19 @@ class Pipeline:
 
         # save data products
         fits.writeto(
-            self.decoor_diff_path,
+            self.score_image_path,
+            cp.asnumpy(score_image).T,
+            header=sfftifier.hdr_target,
+            overwrite=True,
+        )
+        fits.writeto(
+            self.decorr_diff_path,
             cp.asnumpy(decorr_diff).T,
             header=sfftifier.hdr_target,
             overwrite=True,
         )
         fits.writeto(
-            self.decoor_zptimg_path,
+            self.decorr_zptimg_path,
             cp.asnumpy(decorr_zptimg).T,
             header=sfftifier.hdr_target,
             overwrite=True,
