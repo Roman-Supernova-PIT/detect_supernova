@@ -6,13 +6,11 @@ This package is intended to be run within the roman-snpit-env container environm
 
 ## Step 1: Setup Container Environment
 
-Please login to https://jupyter.nersc.gov/hub/home and open a terminal window. 
-
 This package is compatible with the Roman Supernova PIT environment used to run `phrosty`:
 
 https://github.com/Roman-Supernova-PIT/phrosty/tree/main/examples/perlmutter
 
-Before using `detect_supernova`, first follow the `phrosty` Perlmutter setup instructions and ensure that you can run 'phrosty' interactively. You can stop following 'phrosty' instructions at the "Running with the Nsight Profiler" section.
+Before using `detect_supernova`, first follow the `phrosty` Perlmutter setup instructions and ensure that you can run `phrosty` interactively. You can stop following `phrosty` instructions at the "Running with the Nsight Profiler" section.
 
 Once `phrosty` is working, return to the same directory where you setup the `phrosty` environment and proceed with Step 2. 
 
