@@ -1,0 +1,1 @@
+- Rewrote the README to provide step-by-step instructions for running `detect_supernova` using the `phrosty` container environment on Perlmutter. (#22)
