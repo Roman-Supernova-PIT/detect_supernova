@@ -209,7 +209,7 @@ class Detection:
         )
         file_path["difference_truth_path"] = os.path.join(
             file_path["full_output_dir"],
-            self.DIFF_TRUTH_PREFIX + diff_pattern + ".fits",
+            self.DIFF_TRUTH_PREFIX + diff_pattern + ".ecsv",
         )
         # truth matching
         file_path["transients_to_detection_path"] = os.path.join(
