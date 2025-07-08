@@ -2,7 +2,6 @@
 Find templates for given images
 """
 
-from collections import defaultdict
 import requests
 
 import pandas as pd
