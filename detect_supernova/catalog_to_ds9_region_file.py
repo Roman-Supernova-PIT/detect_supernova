@@ -1,23 +1,43 @@
-import sys
+import argparse
 
 from astropy.table import Table
 
 
 def main():
-    catalog_file = sys.argv[1]
-    region_file = catalog_file[:catalog_file.rfind(".")] + ".reg"
+    parser = argparse.ArgumentParser()
+    parser.add_argument("catalog_file", type=str)
+    parser.add_argument("--x_colname", "-x", type=str, default="x_peak")
+    parser.add_argument("--y_colname", "-y", type=str, default="y_peak")
+    parser.add_argument("--label_colname", "-l", type=str, default="peak_value")
+    parser.add_argument("--coordinate_system", "--coord", "-c", type=str, default="image")
+    args = parser.parse_args()
 
-    read_catalog_and_write_region_file(catalog_file, region_file)
+    catalog_file = args.catalog_file
+    region_file = catalog_file[: catalog_file.rfind(".")] + ".reg"
+
+    read_catalog_and_write_region_file(
+        catalog_file,
+        region_file,
+        x_colname=args.x_colname,
+        y_colname=args.y_colname,
+        label_colname=args.label_colname,
+        coordinate_system=args.coordinate_system,
+    )
 
 
 def read_catalog_and_write_region_file(
-    catalog_file, region_file, x_colname="x_peak", y_colname="y_peak", label_colname="peak_value"
+    catalog_file,
+    region_file,
+    x_colname="x_peak",
+    y_colname="y_peak",
+    label_colname="peak_value",
+    coordinate_system="image",
 ):
 
     table = Table.read(catalog_file)
 
-    head = "global point=circle\nimage\n"
-    line_format_string = "point({0:0.2f},{1:0.2f}) # text={{{2:0.2f}}}\n"
+    head = f"global point=circle\n{coordinate_system}\n"
+    line_format_string = "point({0:0.6f},{1:0.6f}) # text={{{2:0.2f}}}\n"
 
     with open(region_file, "w") as outfile:
         outfile.write(head)
