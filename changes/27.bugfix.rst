@@ -1,0 +1,1 @@
+phrosty -> detect_supernova in Issue/PR templates

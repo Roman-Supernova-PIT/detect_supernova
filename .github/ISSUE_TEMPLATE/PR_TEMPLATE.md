@@ -1,5 +1,5 @@
 ---
-name: "Pull Request for phrosty"
+name: "Pull Request for detect_supernova"
 about: Create a pull request to submit new or updated code to the repository
 title: "[PR]: "
 labels: possible solution
