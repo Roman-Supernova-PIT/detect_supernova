@@ -1,0 +1,1 @@
+Add line-length=120 to black config block in pyproject.toml.
