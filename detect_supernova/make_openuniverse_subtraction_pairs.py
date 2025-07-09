@@ -2,6 +2,7 @@
 Find science, templates pairs for example RA, Dec for OpenUniverse2024 images
 """
 
+import argparse
 import requests
 
 import pandas as pd
@@ -140,4 +141,17 @@ def run(
 
 
 if __name__ == "__main__":
-    run()
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--band", "-b", type=str, default="R062")
+    parser.add_argument(
+        "--transient_type",
+        "-t",
+        type=str,
+        choices=["astrophysical", "ranmag"],
+        default="astrophysical",
+        help="Choose simulated transient class to specify MJD range based on different type of injected transient.",
+    )
+    args = parser.parse_args()
+
+    run(**args.__dict__)
