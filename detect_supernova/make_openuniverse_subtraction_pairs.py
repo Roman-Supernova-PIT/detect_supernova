@@ -1,6 +1,4 @@
-"""
-Find science, templates pairs for example RA, Dec for OpenUniverse2024 images
-"""
+"""Find science, templates pairs for example RA, Dec for OpenUniverse2024 images"""
 
 import argparse
 import requests
@@ -22,8 +20,7 @@ def get_image_info_for_ra_dec(ra, dec, band=None):
 
 
 def get_templates_for_points(points, band, min_points=3):
-    """
-    Returns all images in the same bandpass that overlap at least min_points
+    """Returns all images in the same bandpass that overlap at least min_points
     out of the list of points passed in.
 
     Parameters

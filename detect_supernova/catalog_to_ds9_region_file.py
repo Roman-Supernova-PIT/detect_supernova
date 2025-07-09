@@ -41,8 +41,8 @@ def read_catalog_and_write_region_file(
 
     with open(region_file, "w") as outfile:
         outfile.write(head)
-        for x, y, l in zip(table[x_colname], table[y_colname], table[label_colname]):
-            outfile.write(line_format_string.format(x, y, l))
+        for x, y, label in zip(table[x_colname], table[y_colname], table[label_colname]):
+            outfile.write(line_format_string.format(x, y, label))
 
 
 if __name__ == "__main__":
