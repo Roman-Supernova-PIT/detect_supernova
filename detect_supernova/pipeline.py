@@ -15,7 +15,7 @@ import subtraction
 import source_detection
 import truth_matching
 import truth_retrieval
-from util import ImageInfo
+from util import get_center_and_corners
 
 
 def read_data_records(data_records_path):
@@ -431,9 +431,9 @@ def main():
             }
         else:
             science_image_path = Detection().INPUT_IMAGE_PATTERN.format(**science_id)
-            science_image = ImageInfo(science_image_path)
+            science_image_points = get_center_and_corners(science_image_path)
 
-            template_image_info = get_earliest_template_for_image(science_image)
+            template_image_info = get_earliest_template_for_image(science_image_points)
             template_id = {
                 "pointing": template_image_info.pointing,
                 "sca": template_image_info.sca,

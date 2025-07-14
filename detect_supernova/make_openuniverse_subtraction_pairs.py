@@ -31,7 +31,7 @@ def get_templates_for_points(points, band, min_points=3):
 
     Returns
     -------
-    images : List of ImageInfo for overlapping images
+    images : List of DataFrames of image info from Roman-DESC-simdex
 
     Notes
     -----
@@ -90,7 +90,7 @@ def get_earliest_template_for_image(image, **kwargs):
     """
     Parameters
     ----------
-    image : ImageInfo
+    image : DataFrame of image info from Roman-DESC-simdex
     """
     templates = get_templates_for_image(image, **kwargs)
     # Get earliest MJD

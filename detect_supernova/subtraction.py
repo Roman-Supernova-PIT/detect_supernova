@@ -14,22 +14,7 @@ from sfft.SpaceSFFTCupyFlow import SpaceSFFT_CupyFlow
 from roman_imsim.utils import roman_utils
 from sfft.utils.SExSkySubtract import SEx_SkySubtract
 
-from util import ImageInfo
-
-
-INPUT_IMAGE_PATTERN = (
-    "RomanTDS/images/simple_model/{band}/{pointing}/Roman_TDS_simple_model_{band}_{pointing}_{sca}.fits.gz"
-)
-INPUT_TRUTH_PATTERN = (
-    "RomanTDS/truth/{band}/{pointing}/Roman_TDS_index_{band}_{pointing}_{sca}.txt"
-)
-SIMS_DIR = pathlib.Path(os.getenv("SIMS_DIR", None))
-TEMP_DIR = pathlib.Path("/phrosty_temp")
-
-GALSIM_CONFIG = pathlib.Path(os.getenv("SN_INFO_DIR")) / "tds.yaml"
-
-IMAGE_WIDTH = 4088
-IMAGE_HEIGHT = 4088
+from util import ImageInfo, GALSIM_CONFIG
 
 
 def gz_and_ext(in_path, out_path):
