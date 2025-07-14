@@ -209,24 +209,24 @@ class Detection:
         )
         file_path["difference_truth_path"] = os.path.join(
             file_path["full_output_dir"],
-            self.DIFF_TRUTH_PREFIX + diff_pattern + ".fits",
+            self.DIFF_TRUTH_PREFIX + diff_pattern + ".ecsv",
         )
         # truth matching
         file_path["transients_to_detection_path"] = os.path.join(
             file_path["full_output_dir"],
-            self.TRANSIENTS_TO_DETECTION_PREFIX + diff_pattern + ".csv",
+            self.TRANSIENTS_TO_DETECTION_PREFIX + diff_pattern + ".ecsv",
         )
         file_path["detection_to_transients_path"] = os.path.join(
             file_path["full_output_dir"],
-            self.DETECTION_TO_TRANSIENTS_PREFIX + diff_pattern + ".csv",
+            self.DETECTION_TO_TRANSIENTS_PREFIX + diff_pattern + ".ecsv",
         )
         file_path["transients_to_score_detection_path"] = os.path.join(
             file_path["full_output_dir"],
-            self.TRANSIENTS_TO_SCORE_DETECTION_PREFIX + diff_pattern + ".csv",
+            self.TRANSIENTS_TO_SCORE_DETECTION_PREFIX + diff_pattern + ".ecsv",
         )
         file_path["score_detection_to_transients_path"] = os.path.join(
             file_path["full_output_dir"],
-            self.SCORE_DETECTION_TO_TRANSIENTS_PREFIX + diff_pattern + ".csv",
+            self.SCORE_DETECTION_TO_TRANSIENTS_PREFIX + diff_pattern + ".ecsv",
         )
         return file_path
 
