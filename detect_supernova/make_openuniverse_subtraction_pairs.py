@@ -86,6 +86,19 @@ def get_templates_for_image(im, min_points=3):
     return get_templates_for_points(points, band=band, min_points=min_points)
 
 
+def get_earliest_template_for_image(image, **kwargs):
+    """
+    Parameters
+    ----------
+    image : ImageInfo
+    """
+    templates = get_templates_for_image(image, **kwargs)
+    # Get earliest MJD
+    earliest_template = templates.iloc[templates.mjd.argsort()].iloc[0]
+
+    return earliest_template
+
+
 def run(
     band="R062",
     transient_type="astrophysical",
@@ -130,9 +143,7 @@ def run(
     #  that overlaps at least 3 (corners, center).
     template_images = []
     for im in science_images:
-        possible_templates = get_templates_for_image(im)
-        # Get earliest MJD
-        template = possible_templates.iloc[possible_templates.mjd.argsort()].iloc[0]
+        template = get_earliest_template_for_image(im)
         template_images.append(template)
 
     head = "science_band,science_pointing,science_sca,template_band,template_pointing,template_sca"
