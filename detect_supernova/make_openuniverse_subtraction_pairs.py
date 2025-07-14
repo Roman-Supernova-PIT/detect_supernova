@@ -31,8 +31,6 @@ def get_templates_for_points(points, band, min_points=3):
 
     Returns
     -------
-    images : list of (pointing, sca, band) tuples of overlapping images
-
     images : List of ImageInfo for overlapping images
 
     Notes

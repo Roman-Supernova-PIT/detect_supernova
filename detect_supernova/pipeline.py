@@ -10,14 +10,14 @@ from astropy.coordinates import SkyCoord
 from astropy.wcs.utils import pixel_to_skycoord
 
 import data_loader
+from make_openuniverse_subtraction_pairs import get_earliest_template_for_image
 import subtraction
 import source_detection
 import truth_matching
 import truth_retrieval
 
 
-class Detection:
-
+def read_data_records(data_records_path):
     INPUT_COLUMNS = [
         "science_band",
         "science_pointing",
@@ -27,12 +27,17 @@ class Detection:
         "template_sca",
     ]
 
+    return pd.read_csv(data_records_path, usecols=INPUT_COLUMNS)
+
+
+class Detection:
     """
     INPUT_IMAGE_PATTERN = ("/global/cfs/cdirs/lsst/shared/external/roman-desc-sims/Roman_data"
                                 "/RomanTDS/images/simple_model/{band}/{pointing}/Roman_TDS_simple_model_{band}_{pointing}_{sca}.fits.gz")
     INPUT_TRUTH_PATTERN = ("/global/cfs/cdirs/lsst/shared/external/roman-desc-sims/Roman_data"
                                  "/RomanTDS/truth/{band}/{pointing}/Roman_TDS_index_{band}_{pointing}_{sca}.txt")
     """
+
     SIMS_DIR = os.getenv("SIMS_DIR", None)
 
     INPUT_IMAGE_PATTERN = (
@@ -40,25 +45,16 @@ class Detection:
         + "/RomanTDS/images/simple_model/{band}/{pointing}/Roman_TDS_simple_model_{band}_{pointing}_{sca}.fits.gz"
     )
     INPUT_TRUTH_PATTERN = (
-        SIMS_DIR
-        + "/RomanTDS/truth/{band}/{pointing}/Roman_TDS_index_{band}_{pointing}_{sca}.txt"
+        SIMS_DIR + "/RomanTDS/truth/{band}/{pointing}/Roman_TDS_index_{band}_{pointing}_{sca}.txt"
     )
 
-    DIFF_PATTERN = (
-        "{science_band}_{science_pointing}_{science_sca}_-_{template_band}_{template_pointing}_{template_sca}"
-    )
+    DIFF_PATTERN = "{science_band}_{science_pointing}_{science_sca}_-_{template_band}_{template_pointing}_{template_sca}"
 
     # Source detection config.
     SOURCE_EXTRACTOR_EXECUTABLE = "source-extractor"
-    DETECTION_CONFIG = os.path.join(
-        os.path.dirname(__file__), "..", "configs", "default.sex"
-    )
-    DETECTION_PARA = os.path.join(
-        os.path.dirname(__file__), "..", "configs", "default.param"
-    )
-    DETECTION_FILTER = os.path.join(
-        os.path.dirname(__file__), "..", "configs", "default.conv"
-    )
+    DETECTION_CONFIG = os.path.join(os.path.dirname(__file__), "..", "configs", "default.sex")
+    DETECTION_PARA = os.path.join(os.path.dirname(__file__), "..", "configs", "default.param")
+    DETECTION_FILTER = os.path.join(os.path.dirname(__file__), "..", "configs", "default.conv")
 
     # Source Matching
     MATCH_RADIUS = 0.4  # in arcsec unit
@@ -74,11 +70,8 @@ class Detection:
     TRANSIENTS_TO_SCORE_DETECTION_PREFIX = "transients_to_score_detection_"
     SCORE_DETECTION_TO_TRANSIENTS_PREFIX = "score_detection_to_transients_"
 
-    def __init__(self, data_records_path, temp_dir=None, output_dir="./output"):
-        self.data_records_path = data_records_path
-        self.data_records = pd.read_csv(
-            self.data_records_path, usecols=self.INPUT_COLUMNS
-        )
+    def __init__(self, data_records, temp_dir=None, output_dir="./output"):
+        self.data_records = data_records
         self.temp_dir = temp_dir
         self.output_dir = output_dir
 
@@ -145,9 +138,7 @@ class Detection:
         transients_skycoord = SkyCoord(
             transients.ra, transients.dec, frame=transient_frame, unit="deg"
         )
-        detection_skycoord = pixel_to_skycoord(
-            detection[x_col], detection[y_col], difference_wcs
-        )
+        detection_skycoord = pixel_to_skycoord(detection[x_col], detection[y_col], difference_wcs)
         transients_to_detection = truth_matching.skymatch_and_join(
             transients, detection, transients_skycoord, detection_skycoord, match_radius
         )
@@ -176,9 +167,7 @@ class Detection:
 
         # subtraction
         file_path["science_image_path"] = self.INPUT_IMAGE_PATTERN.format(**science_id)
-        file_path["template_image_path"] = self.INPUT_IMAGE_PATTERN.format(
-            **template_id
-        )
+        file_path["template_image_path"] = self.INPUT_IMAGE_PATTERN.format(**template_id)
         file_path["difference_image_path"] = os.path.join(
             file_path["full_output_dir"],
             self.DIFF_IMAGE_PREFIX + diff_pattern + ".fits",
@@ -204,9 +193,7 @@ class Detection:
         )
         # truth retrieval
         file_path["science_truth_path"] = self.INPUT_TRUTH_PATTERN.format(**science_id)
-        file_path["template_truth_path"] = self.INPUT_TRUTH_PATTERN.format(
-            **template_id
-        )
+        file_path["template_truth_path"] = self.INPUT_TRUTH_PATTERN.format(**template_id)
         file_path["difference_truth_path"] = os.path.join(
             file_path["full_output_dir"],
             self.DIFF_TRUTH_PREFIX + diff_pattern + ".ecsv",
@@ -351,9 +338,60 @@ def main():
     parser.add_argument(
         "-d",
         "--data-records",
+        dest="data_records_path",
         type=str,
-        required=True,
-        help="Input file with data records.",
+        help="Input file with data records.  It is an error to specify --data-records and --science-path.",
+    )
+    parser.add_argument(
+        "--science-path",
+        type=str,
+        default=None,
+        help="Pass a science image by file path.  Will find a template image if --template-path not specified.",
+    )
+    parser.add_argument(
+        "--template-path",
+        type=str,
+        default=None,
+        help="Pass a template image by file path.  Optional.  Only used with --science-path.",
+    )
+    parser.add_argument(
+        "--science-pointing",
+        "--pointing",
+        type=int,
+        default=None,
+        help="Specify an image by pointing.  Must also specify sca, band.",
+    )
+    parser.add_argument(
+        "--science-sca",
+        "--sca",
+        type=int,
+        default=None,
+        help="Specify an image by sca.  Must also specify pointing, band.",
+    )
+    parser.add_argument(
+        "--science-band",
+        "--band",
+        type=str,
+        default=None,
+        help="Specify an image by band.  Must also specify pointing, sca.",
+    )
+    parser.add_argument(
+        "--template-pointing",
+        type=int,
+        default=None,
+        help="Specify a template pointing.",
+    )
+    parser.add_argument(
+        "--template-sca",
+        type=int,
+        default=None,
+        help="Specify an image by template sca.",
+    )
+    parser.add_argument(
+        "--template-band",
+        type=str,
+        default=None,
+        help="Specify an image by template band.  This is optional and will default to --science-band",
     )
     parser.add_argument("-t", "--temp-dir", default=None, help="Temporary directory.")
     parser.add_argument(
@@ -361,7 +399,66 @@ def main():
     )
     args = parser.parse_args()
 
-    detection = Detection(args.data_records, args.temp_dir, args.output_dir)
+    # Validate consistency
+    if args.data_records_path is not None and (
+        (args.science_image_path is not None)
+        or (args.science_pointing is not None)
+        or (args.science_sca is not None)
+        or (args.science_band is not None)
+    ):
+        print(
+            "It is an error to specify 'data_records_path' and any of 'science_(image_path,pointing,sca,band)'"
+        )
+        return
+
+    # Load data records
+    if args.data_records_path is not None:
+        data_records = read_data_records(args.data_records_path)
+    else:
+        if args.science_pointing is not None:
+            science_id = {
+                "pointing": args.science_pointing,
+                "sca": args.science_sca,
+                "band": args.science_band,
+            }
+
+        if args.template_pointing is not None:
+            template_id = {
+                "pointing": args.template_pointing,
+                "sca": args.template_sca,
+                "band": args.template_band,
+            }
+        else:
+            template_image_info = get_earliest_template_for_image(im)
+            template_id = {
+                "pointing": template_image_info.pointing,
+                "sca": template_image_info.sca,
+                "band": template_image_info.band,
+            }
+
+        INPUT_COLUMNS = [
+            "science_band",
+            "science_pointing",
+            "science_sca",
+            "template_band",
+            "template_pointing",
+            "template_sca",
+        ]
+
+        # Create a DataFrame that looks just like what we were loading in from the file.
+        data_records = pd.DataFrame(
+            (
+                science_id["pointing"],
+                science_id["sca"],
+                science_id["band"],
+                template_id["pointing"],
+                template_id["sca"],
+                template_id["band"],
+            ),
+            colnames=INPUT_COLUMNS,
+        )
+
+    detection = Detection(data_records, args.temp_dir, args.output_dir)
     detection.run()
 
 
