@@ -10,9 +10,7 @@ from snappl.image import OpenUniverse2024FITSImage
 INPUT_IMAGE_PATTERN = (
     "RomanTDS/images/simple_model/{band}/{pointing}/Roman_TDS_simple_model_{band}_{pointing}_{sca}.fits.gz"
 )
-INPUT_TRUTH_PATTERN = (
-    "RomanTDS/truth/{band}/{pointing}/Roman_TDS_index_{band}_{pointing}_{sca}.txt"
-)
+INPUT_TRUTH_PATTERN = "RomanTDS/truth/{band}/{pointing}/Roman_TDS_index_{band}_{pointing}_{sca}.txt"
 SIMS_DIR = pathlib.Path(os.getenv("SIMS_DIR", None))
 TEMP_DIR = pathlib.Path("/phrosty_temp")
 
@@ -28,9 +26,7 @@ class ImageInfo:
     temp_dir: pathlib.Path
 
     def __post_init__(self):
-        self.image_path = SIMS_DIR / pathlib.Path(
-            INPUT_IMAGE_PATTERN.format(**self.data_id)
-        )
+        self.image_path = SIMS_DIR / pathlib.Path(INPUT_IMAGE_PATTERN.format(**self.data_id))
         self.cx = IMAGE_WIDTH // 2
         self.cy = IMAGE_HEIGHT // 2
 

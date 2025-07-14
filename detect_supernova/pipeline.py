@@ -45,11 +45,11 @@ class Detection:
         SIMS_DIR
         + "/RomanTDS/images/simple_model/{band}/{pointing}/Roman_TDS_simple_model_{band}_{pointing}_{sca}.fits.gz"
     )
-    INPUT_TRUTH_PATTERN = (
-        SIMS_DIR + "/RomanTDS/truth/{band}/{pointing}/Roman_TDS_index_{band}_{pointing}_{sca}.txt"
-    )
+    INPUT_TRUTH_PATTERN = SIMS_DIR + "/RomanTDS/truth/{band}/{pointing}/Roman_TDS_index_{band}_{pointing}_{sca}.txt"
 
-    DIFF_PATTERN = "{science_band}_{science_pointing}_{science_sca}_-_{template_band}_{template_pointing}_{template_sca}"
+    DIFF_PATTERN = (
+        "{science_band}_{science_pointing}_{science_sca}_-_{template_band}_{template_pointing}_{template_sca}"
+    )
 
     # Source detection config.
     SOURCE_EXTRACTOR_EXECUTABLE = "source-extractor"
@@ -136,9 +136,7 @@ class Detection:
 
         detection = data_loader.load_table(difference_detection_path)
         transients = truth[truth.obj_type == "transient"].copy().reset_index(drop=True)
-        transients_skycoord = SkyCoord(
-            transients.ra, transients.dec, frame=transient_frame, unit="deg"
-        )
+        transients_skycoord = SkyCoord(transients.ra, transients.dec, frame=transient_frame, unit="deg")
         detection_skycoord = pixel_to_skycoord(detection[x_col], detection[y_col], difference_wcs)
         transients_to_detection = truth_matching.skymatch_and_join(
             transients, detection, transients_skycoord, detection_skycoord, match_radius
@@ -241,9 +239,7 @@ class Detection:
         file_path = self.path_helper(science_id, template_id)
 
         print(
-            "[INFO] Processing started for data records "
-            f"| Science ID {science_id} "
-            f"| Template ID {template_id} "
+            "[INFO] Processing started for data records " f"| Science ID {science_id} " f"| Template ID {template_id} "
         )
 
         print("[INFO] Processing subtraction")
@@ -395,9 +391,7 @@ def main():
         help="Specify an image by template band.  This is optional and will default to --science-band",
     )
     parser.add_argument("-t", "--temp-dir", default=None, help="Temporary directory.")
-    parser.add_argument(
-        "-o", "--output-dir", type=str, default="./output", help="Output directory."
-    )
+    parser.add_argument("-o", "--output-dir", type=str, default="./output", help="Output directory.")
     args = parser.parse_args()
 
     # Validate consistency
@@ -407,9 +401,7 @@ def main():
         or (args.science_sca is not None)
         or (args.science_band is not None)
     ):
-        print(
-            "It is an error to specify 'data_records_path' and any of 'science_(image_path,pointing,sca,band)'"
-        )
+        print("It is an error to specify 'data_records_path' and any of 'science_(image_path,pointing,sca,band)'")
         return
 
     # Load data records
