@@ -32,6 +32,14 @@ def get_templates_for_points(points, band, min_points=3):
     Returns
     -------
     images : list of (pointing, sca, band) tuples of overlapping images
+
+    images : List of ImageInfo for overlapping images
+
+    Notes
+    -----
+    This uses the roman-desc-simdex NERSC Spin server.
+    The DB server query for image info as a function of RA, Dec sometimes fails.
+    If it does then it will raise a RuntimeError, this function will let that pass through.
     """
     matches = []
     for i, (ra, dec) in enumerate(points):
