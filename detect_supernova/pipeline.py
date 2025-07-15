@@ -15,7 +15,7 @@ import subtraction
 import source_detection
 import truth_matching
 import truth_retrieval
-from util import get_center_and_corners
+from util import get_center_and_corners, INPUT_IMAGE_PATTERN, SIMS_DIR
 
 
 def read_data_records(data_records_path):
@@ -422,10 +422,10 @@ def main():
                 "band": args.template_band,
             }
         else:
-            science_image_path = Detection().INPUT_IMAGE_PATTERN.format(**science_id)
+            science_image_path = SIMS_DIR / pathlib.Path(INPUT_IMAGE_PATTERN.format(**science_id))
             science_image_points = get_center_and_corners(science_image_path)
 
-            template_image_info = get_earliest_template_for_image(science_image_points)
+            template_image_info = get_earliest_template_for_image(science_image_points, science_id["band"])
             template_id = {
                 "pointing": template_image_info.pointing,
                 "sca": template_image_info.sca,

@@ -57,13 +57,14 @@ def get_center_and_corners(image_path):
     """
     science_image = OpenUniverse2024FITSImage(image_path, None, None)
     wcs = science_image.get_wcs()
+    band = science_image.band
 
     nx, ny = science_image.image_shape
 
     # Here's the code from roman-desc-simdex to calculate corners
-    corner_ra, corner_dec = wcs.pixel_to_world_values([0, 0, nx - 1, nx - 1], [0, ny - 1, 0, ny - 1])
+    corner_ra, corner_dec = wcs.pixel_to_world([0, 0, nx - 1, nx - 1], [0, ny - 1, 0, ny - 1])
     # Off by 0.5 or 1 pixel isn't a concern here.
-    center_ra, center_dec = wcs.pixel_to_world_values(nx / 2, ny / 2)
+    center_ra, center_dec = wcs.pixel_to_world(nx / 2, ny / 2)
 
     min_ra = min(corner_ra)
     maxra = max(corner_ra)
@@ -116,6 +117,7 @@ def get_center_and_corners(image_path):
         maxra,
         min_dec,
         maxdec,
+        band,
     )
     names = (
         "ra",
@@ -132,6 +134,7 @@ def get_center_and_corners(image_path):
         "maxra",
         "min_dec",
         "maxdec",
+        "band",
     )
 
-    return pd.DataFrame.from_records(coords, columns=names)
+    return pd.DataFrame.from_records([coords], columns=names)
