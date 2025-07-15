@@ -40,6 +40,18 @@ python detect_supernova/pipeline.py -d test/test_one_data_record.csv -o /dia_out
 
 Note the `/dia_out_dir` only makes sense because we're running in the podman container, where we have bound /dia_out_dir to an output directory.
 
+Can also run by just specifying the pointing, sca, band of the science image
+
+```
+python detect_supernova/pipeline.py --pointing 53526 --sca 1 --band R062 -o /dia_out_dir
+```
+
+or just by passing the image path
+
+```
+image_path=/dvs_ro/cfs/cdirs/lsst/shared/external/roman-desc-sims/Roman_data/RomanTDS/images/simple_model/R062/53526/Roman_TDS_simple_model_R062_53526_1.fits.gz
+python detect_supernova/pipeline.py ${image_path} -o /dia_out_dir
+```
 
 ## detect_supernova Workflow
 <img src="workflow.png" alt="Workflow of the detection pipeline." style="width:800px; height:auto;">
