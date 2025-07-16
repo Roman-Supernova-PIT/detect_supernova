@@ -57,7 +57,6 @@ def get_center_and_corners(image_path):
     """
     science_image = OpenUniverse2024FITSImage(image_path, None, None)
     wcs = science_image.get_wcs()
-    band = science_image.band
 
     nx, ny = science_image.image_shape
 
