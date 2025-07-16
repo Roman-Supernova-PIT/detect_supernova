@@ -1,4 +1,10 @@
+import os
+
+import numpy as np
+import pandas as pd
+
 from detect_supernova.make_openuniverse_subtraction_pairs import get_image_info_for_ra_dec, get_templates_for_points
+from detect_supernova.util import get_center_and_corners
 
 
 def test_query():
@@ -23,3 +29,10 @@ def test_get_templates_for_points():
     templates = get_templates_for_points(points, band)
 
     assert len(templates) == 7
+
+
+def test_get_center_and_corners():
+    image_path = os.path.join(os.path.dirname(__file__), "photometry_test_data", "RomanTDS", "images", "simple_model", "R062", "35083", "Roman_TDS_simple_model_R062_35083_8.fits.gz")
+    points = get_center_and_corners(image_path)
+    expected_df = pd.DataFrame(4, 24., 1, 23, 5, 16, 10, 293, 100, 234, 1, 14, 1, 1)
+    pd.testing.assert_frame_equal(points, expected_df)
