@@ -67,9 +67,9 @@ def get_center_and_corners(image_path):
     center_ra, center_dec = wcs.pixel_to_world(nx / 2, ny / 2)
 
     min_ra = min(corner_ra)
-    maxra = max(corner_ra)
+    max_ra = max(corner_ra)
     min_dec = min(corner_dec)
-    maxdec = max(corner_dec)
+    max_dec = max(corner_dec)
 
     # Attempt to order them so that 00, 01, 10, 11 makes sense on the sky
     ra_order = [0, 1, 2, 3]
@@ -80,9 +80,9 @@ def get_center_and_corners(image_path):
         newras = [r - 360.0 if r > 180.0 else r for r in corner_ra]
         ra_order.sort(key=lambda i: newras[i])
         min_ra = min(newras)
-        maxra = max(newras)
+        max_ra = max(newras)
         min_ra = min_ra if min_ra > 0 else min_ra + 360.0
-        maxra = maxra if maxra > 0 else maxra + 360.0
+        max_ra = max_ra if max_ra > 0 else max_ra + 360.0
 
     # Of the two lowest ras, of those pick the one with the lower dec;
     #   that's 00, the other one is 01
@@ -114,10 +114,9 @@ def get_center_and_corners(image_path):
         ra_11,
         dec_11,
         min_ra,
-        maxra,
+        max_ra,
         min_dec,
-        maxdec,
-        band,
+        max_dec,
     )
     names = (
         "ra",
@@ -131,10 +130,9 @@ def get_center_and_corners(image_path):
         "ra_11",
         "dec_11",
         "min_ra",
-        "maxra",
+        "max_ra",
         "min_dec",
-        "maxdec",
-        "band",
+        "max_dec",
     )
 
     return pd.DataFrame.from_records([coords], columns=names)
