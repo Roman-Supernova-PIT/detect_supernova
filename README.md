@@ -40,6 +40,11 @@ python detect_supernova/pipeline.py -d test/test_one_data_record.csv -o /dia_out
 
 Note the `/dia_out_dir` only makes sense because we're running in the podman container, where we have bound /dia_out_dir to an output directory.
 
+Can run by specifying the values on the command line
+```
+python detect_supernova/pipeline.py --pointing 53526 --sca 1 --band R062 --template-pointing 5044 --template-sca 8 --template-band R062 -o /dia_out_dir
+```
+
 Can also run by just specifying the pointing, sca, band of the science image
 
 ```
