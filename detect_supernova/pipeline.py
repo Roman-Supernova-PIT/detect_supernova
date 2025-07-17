@@ -9,26 +9,13 @@ import pandas as pd
 from astropy.coordinates import SkyCoord
 from astropy.wcs.utils import pixel_to_skycoord
 
-import data_loader
-from make_openuniverse_subtraction_pairs import get_earliest_template_for_image
-import subtraction
-import source_detection
-import truth_matching
-import truth_retrieval
-from util import get_center_and_corners, INPUT_IMAGE_PATTERN, SIMS_DIR
-
-
-def read_data_records(data_records_path):
-    INPUT_COLUMNS = [
-        "science_band",
-        "science_pointing",
-        "science_sca",
-        "template_band",
-        "template_pointing",
-        "template_sca",
-    ]
-
-    return pd.read_csv(data_records_path, usecols=INPUT_COLUMNS)
+from detect_supernova import data_loader
+from detect_supernova.make_openuniverse_subtraction_pairs import get_earliest_template_for_image
+from detect_supernova import subtraction
+from detect_supernova import source_detection
+from detect_supernova import truth_matching
+from detect_supernova import truth_retrieval
+from detect_supernova.util import INPUT_IMAGE_PATTERN, SIMS_DIR, get_center_and_corners, make_data_records, read_data_records
 
 
 class Detection:
@@ -404,56 +391,10 @@ def main():
         print("It is an error to specify 'data_records_path' and any of 'science_(image_path,pointing,sca,band)'")
         return
 
-    # Load data records
     if args.data_records_path is not None:
         data_records = read_data_records(args.data_records_path)
     else:
-        if args.science_pointing is not None:
-            science_id = {
-                "pointing": args.science_pointing,
-                "sca": args.science_sca,
-                "band": args.science_band,
-            }
-
-        if args.template_pointing is not None:
-            template_id = {
-                "pointing": args.template_pointing,
-                "sca": args.template_sca,
-                "band": args.template_band,
-            }
-        else:
-            science_image_path = SIMS_DIR / pathlib.Path(INPUT_IMAGE_PATTERN.format(**science_id))
-            science_image_points = get_center_and_corners(science_image_path)
-            science_image_points["filter"] = science_id["band"]
-
-            template_image_info = get_earliest_template_for_image(science_image_points)
-            template_id = {
-                "pointing": template_image_info.pointing,
-                "sca": template_image_info.sca,
-                "band": template_image_info.band,
-            }
-
-        INPUT_COLUMNS = [
-            "science_band",
-            "science_pointing",
-            "science_sca",
-            "template_band",
-            "template_pointing",
-            "template_sca",
-        ]
-
-        # Create a DataFrame that looks just like what we were loading in from the file.
-        data_records = pd.DataFrame(
-            (
-                science_id["pointing"],
-                science_id["sca"],
-                science_id["band"],
-                template_id["pointing"],
-                template_id["sca"],
-                template_id["band"],
-            ),
-            colnames=INPUT_COLUMNS,
-        )
+        make_data_records(science_pointing=args.science_pointing, template_pointing=args.template_pointing)
 
     detection = Detection(data_records, args.temp_dir, args.output_dir)
     detection.run()

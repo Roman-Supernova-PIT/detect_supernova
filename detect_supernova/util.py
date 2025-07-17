@@ -4,6 +4,7 @@ import pathlib
 
 import pandas as pd
 
+from detect_supernova.make_openuniverse_subtraction_pairs import get_earliest_template_for_image
 from snappl.image import OpenUniverse2024FITSImage
 
 
@@ -136,8 +137,112 @@ def get_center_and_corners(image_path):
 
     df = pd.DataFrame.from_records([coords], columns=names)
     df = df.iloc[-1]
-#    df = pd.Series([coords], columns=names)
-#    data_dict = {n: c for n, c in zip(coords, names)}
-#    df = pd.Series(data_dict)
+    #    df = pd.Series([coords], columns=names)
+    #    data_dict = {n: c for n, c in zip(coords, names)}
+    #    df = pd.Series(data_dict)
 
     return df
+
+
+def make_data_records(
+    science_pointing=None,
+    science_sca=None,
+    science_band=None,
+    template_pointing=None,
+    template_sca=None,
+    template_band=None,
+    base_image_location=SIMS_DIR,
+):
+    """
+    Returns data records from a specified science pointing and template pointing
+
+    If passed a set of science_{pointing, sca, band}; template_{pointing, sca, band}
+        will return that as a DataFrame in the same style as the data_record.
+    If passed a set of science_{pointing, sca, band} but no template info
+        will find the earliest template image that has signifiant overlap
+
+    Parameters
+    ----------
+    science_pointing: int, None
+        Pointing of science image
+    science_sca: int, None
+        Sensor Chip Assembly (SCA) of science image
+    science_band: str, None
+        Filter of science image
+    template_pointing: int, None
+        Pointing of template image
+    template_sca: int, None
+        Sensor Chip Assembly (SCA) of template image
+    template_band: str, None
+        Filter of template image
+
+    Either data_records_path or science_{pointing, sca, band} must be defined.
+
+    Returns
+    -------
+    pandas.DataFrame with rows of science_{pointing, sca, band} and template_{pointing, sca, band}
+    """
+    science_id = {
+        "pointing": science_pointing,
+        "sca": science_sca,
+        "band": science_band,
+    }
+    if template_pointing is not None:
+        template_id = {
+            "pointing": template_pointing,
+            "sca": template_sca,
+            "band": template_band,
+        }
+    else:
+        science_image_path = base_image_location / pathlib.Path(INPUT_IMAGE_PATTERN.format(**science_id))
+        science_image_points = get_center_and_corners(science_image_path)
+        science_image_points["filter"] = science_id["band"]
+
+        template_image_info = get_earliest_template_for_image(science_image_points)
+        template_id = {
+            "pointing": template_image_info.pointing,
+            "sca": template_image_info.sca,
+            "band": template_image_info.get("filter"),
+        }
+
+    # Create a DataFrame that looks just like what we were loading in from the file.
+    INPUT_COLUMNS = [
+        "science_band",
+        "science_pointing",
+        "science_sca",
+        "template_pointing",
+        "template_sca",
+        "template_band",
+    ]
+    data_records = pd.DataFrame.from_records(
+        [(
+            science_id["pointing"],
+            science_id["sca"],
+            science_id["band"],
+            template_id["pointing"],
+            template_id["sca"],
+            template_id["band"],
+        )],
+        columns=INPUT_COLUMNS,
+    )
+
+    return data_records
+
+
+def read_data_records(data_records_path):
+    """
+    Parameters
+    ----------
+    data_records_path: str, pathlib.Path
+        Path to file with science and template pointings.  Overrides any command-line specification of pointings.
+    """
+    INPUT_COLUMNS = [
+        "science_band",
+        "science_pointing",
+        "science_sca",
+        "template_band",
+        "template_pointing",
+        "template_sca",
+    ]
+
+    return pd.read_csv(data_records_path, usecols=INPUT_COLUMNS)
