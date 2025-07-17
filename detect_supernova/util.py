@@ -215,14 +215,16 @@ def make_data_records(
         "template_band",
     ]
     data_records = pd.DataFrame.from_records(
-        [(
-            science_id["pointing"],
-            science_id["sca"],
-            science_id["band"],
-            template_id["pointing"],
-            template_id["sca"],
-            template_id["band"],
-        )],
+        [
+            (
+                science_id["pointing"],
+                science_id["sca"],
+                science_id["band"],
+                template_id["pointing"],
+                template_id["sca"],
+                template_id["band"],
+            )
+        ],
         columns=INPUT_COLUMNS,
     )
 

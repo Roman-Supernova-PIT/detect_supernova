@@ -15,7 +15,13 @@ from detect_supernova import subtraction
 from detect_supernova import source_detection
 from detect_supernova import truth_matching
 from detect_supernova import truth_retrieval
-from detect_supernova.util import INPUT_IMAGE_PATTERN, SIMS_DIR, get_center_and_corners, make_data_records, read_data_records
+from detect_supernova.util import (
+    INPUT_IMAGE_PATTERN,
+    SIMS_DIR,
+    get_center_and_corners,
+    make_data_records,
+    read_data_records,
+)
 
 
 class Detection:
@@ -394,7 +400,14 @@ def main():
     if args.data_records_path is not None:
         data_records = read_data_records(args.data_records_path)
     else:
-        make_data_records(science_pointing=args.science_pointing, template_pointing=args.template_pointing)
+        data_records = make_data_records(
+            science_pointing=args.science_pointing,
+            science_sca=args.science_sca,
+            science_band=args.science_band,
+            template_pointing=args.template_pointing,
+            template_sca=args.template_sca,
+            template_band=args.template_band,
+        )
 
     detection = Detection(data_records, args.temp_dir, args.output_dir)
     detection.run()
