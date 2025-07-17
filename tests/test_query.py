@@ -80,6 +80,9 @@ def test_get_earliest_template_for_image():
 
 def test_get_image_info_for_ra_dec():
     expected_columns = (
+        "mjd",
+        "exptime",
+        "pa",
         "boredec",
         "borera",
         "filter",
@@ -96,28 +99,10 @@ def test_get_image_info_for_ra_dec():
         "ra_11",
         "dec_11",
     )
-    expected_dtype = (
-        np.float64,
-        np.float64,
-        str,
-        np.int64,
-        np.int64,
-        np.float64,
-        np.float64,
-        np.float64,
-        np.float64,
-        np.float64,
-        np.float64,
-        np.float64,
-        np.float64,
-        np.float64,
-        np.float64,
-    )
-    row = (1, 1, "R062", 1, 4, 24.0, 1, 23, 5, 16, 10, 293, 100, 234, 100)
-    expected_df = pd.DataFrame.from_records([row], columns=expected_columns)
 
     ra, dec = 8.3, -42
     images = get_image_info_for_ra_dec(ra, dec)
+    assert set(images.columns) == set(expected_columns)
 
     print(images.dtypes)
     assert len(images) == 484
