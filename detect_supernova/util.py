@@ -207,9 +207,9 @@ def make_data_records(
 
     # Create a DataFrame that looks just like what we were loading in from the file.
     INPUT_COLUMNS = [
-        "science_band",
         "science_pointing",
         "science_sca",
+        "science_band",
         "template_pointing",
         "template_sca",
         "template_band",
