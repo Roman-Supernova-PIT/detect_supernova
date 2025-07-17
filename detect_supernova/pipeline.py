@@ -425,7 +425,6 @@ def main():
             science_image_path = SIMS_DIR / pathlib.Path(INPUT_IMAGE_PATTERN.format(**science_id))
             science_image_points = get_center_and_corners(science_image_path)
             science_image_points["filter"] = science_id["band"]
-            science_image_points["filter"].dtype = str
 
             template_image_info = get_earliest_template_for_image(science_image_points)
             template_id = {

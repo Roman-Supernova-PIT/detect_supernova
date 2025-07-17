@@ -134,4 +134,10 @@ def get_center_and_corners(image_path):
         "max_dec",
     )
 
-    return pd.DataFrame.from_records([coords], columns=names)
+    df = pd.DataFrame.from_records([coords], columns=names)
+    df = df.iloc[-1]
+#    df = pd.Series([coords], columns=names)
+#    data_dict = {n: c for n, c in zip(coords, names)}
+#    df = pd.Series(data_dict)
+
+    return df
