@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 
 from detect_supernova.make_openuniverse_subtraction_pairs import (
+    get_earliest_template_for_image,
     get_image_info_for_ra_dec,
     get_templates_for_points,
     get_image_info_for_ra_dec,
@@ -47,11 +48,10 @@ def test_get_center_and_corners():
         "Roman_TDS_simple_model_R062_35083_8.fits.gz",
     )
     expected_columns = ("ra", "dec", "ra_00", "dec_00", "ra_01", "dec_01", "ra_10", "dec_10", "ra_11", "dec_11")
-    expected_dtype = (np.float64, np.float64, str, np.int64, np.int64, np.float64, np.float64, np.float64, np.float64, np.float64, np.float64, np.float64, np.float64, np.float64, np.float64)
+    row = (4, 24.0, 1, 23, 5, 16, 10, 293, 100, 234)
     expected_df = pd.DataFrame.from_records(
-        [(1, 1, "R062", 1, 4, 24.0, 1, 23, 5, 16, 10, 293, 100, 234)], columns=expected_columns
+        [row], columns=expected_columns
     )
-
 
     points = get_center_and_corners(image_path)
 
@@ -61,15 +61,66 @@ def test_get_center_and_corners():
     assert len(set(expected_df.columns)) == len(set(expected_df.columns).intersection(set(points.columns)))
 
 
+def test_get_earliest_template_for_image():
+    image_path = os.path.join(
+        os.path.dirname(__file__),
+        "photometry_test_data",
+        "RomanTDS",
+        "images",
+        "simple_model",
+        "R062",
+        "35083",
+        "Roman_TDS_simple_model_R062_35083_8.fits.gz",
+    )
+
+    points = get_center_and_corners(image_path)
+    earliest_template = get_earliest_template_for_image(points)
+
+    assert len(earliest_template) == -2
+
+
 def test_get_image_info_for_ra_dec():
-    expected_columns = ("boredec", "borera", "filter", "pointing", "sca", "ra", "dec", "ra_00", "dec_00", "ra_01", "dec_01", "ra_10", "dec_10", "ra_11", "dec_11")
-    expected_dtype = (np.float64, np.float64, str, np.int64, np.int64, np.float64, np.float64, np.float64, np.float64, np.float64, np.float64, np.float64, np.float64, np.float64, np.float64)
+    expected_columns = (
+        "boredec",
+        "borera",
+        "filter",
+        "pointing",
+        "sca",
+        "ra",
+        "dec",
+        "ra_00",
+        "dec_00",
+        "ra_01",
+        "dec_01",
+        "ra_10",
+        "dec_10",
+        "ra_11",
+        "dec_11",
+    )
+    expected_dtype = (
+        np.float64,
+        np.float64,
+        str,
+        np.int64,
+        np.int64,
+        np.float64,
+        np.float64,
+        np.float64,
+        np.float64,
+        np.float64,
+        np.float64,
+        np.float64,
+        np.float64,
+        np.float64,
+        np.float64,
+    )
+    row = (1, 1, "R062", 1, 4, 24.0, 1, 23, 5, 16, 10, 293, 100, 234, 100)
     expected_df = pd.DataFrame.from_records(
-        [(1, 1, "R062", 1, 4, 24.0, 1, 23, 5, 16, 10, 293, 100, 234)], columns=expected_columns
+        [row], columns=expected_columns
     )
 
     ra, dec = 8.3, -42
     images = get_image_info_for_ra_dec(ra, dec)
 
-    print(images.dtype)
+    print(images.dtypes)
     assert len(images) == 484
