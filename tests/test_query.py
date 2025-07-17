@@ -154,4 +154,6 @@ def test_read_data_records_from_just_science_id():
     )
 
     assert data_records.template_pointing[0] == 5044
+    assert data_records.template_sca[0] == 8
+    assert data_records.template_band[0] == "R062"
     assert len(data_records) == 1
