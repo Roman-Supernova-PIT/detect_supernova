@@ -1,5 +1,6 @@
 import os
 
+import numpy as np
 import pandas as pd
 
 from detect_supernova.make_openuniverse_subtraction_pairs import (
@@ -46,9 +47,11 @@ def test_get_center_and_corners():
         "Roman_TDS_simple_model_R062_35083_8.fits.gz",
     )
     expected_columns = ("ra", "dec", "ra_00", "dec_00", "ra_01", "dec_01", "ra_10", "dec_10", "ra_11", "dec_11")
+    expected_dtype = (np.float64, np.float64, str, np.int64, np.int64, np.float64, np.float64, np.float64, np.float64, np.float64, np.float64, np.float64, np.float64, np.float64, np.float64)
     expected_df = pd.DataFrame.from_records(
-        [(4, 24.0, 1, 23, 5, 16, 10, 293, 100, 234)], columns=expected_columns
+        [(1, 1, "R062", 1, 4, 24.0, 1, 23, 5, 16, 10, 293, 100, 234)], columns=expected_columns
     )
+
 
     points = get_center_and_corners(image_path)
 
@@ -59,6 +62,14 @@ def test_get_center_and_corners():
 
 
 def test_get_image_info_for_ra_dec():
+    expected_columns = ("boredec", "borera", "filter", "pointing", "sca", "ra", "dec", "ra_00", "dec_00", "ra_01", "dec_01", "ra_10", "dec_10", "ra_11", "dec_11")
+    expected_dtype = (np.float64, np.float64, str, np.int64, np.int64, np.float64, np.float64, np.float64, np.float64, np.float64, np.float64, np.float64, np.float64, np.float64, np.float64)
+    expected_df = pd.DataFrame.from_records(
+        [(1, 1, "R062", 1, 4, 24.0, 1, 23, 5, 16, 10, 293, 100, 234)], columns=expected_columns
+    )
+
     ra, dec = 8.3, -42
     images = get_image_info_for_ra_dec(ra, dec)
+
+    print(images.dtype)
     assert len(images) == 484
