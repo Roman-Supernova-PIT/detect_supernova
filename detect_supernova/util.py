@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import os
 from pathlib import Path
+import re
 
 import pandas as pd
 
@@ -264,8 +265,27 @@ def get_pointing_sca_band_from_image_path(image_path):
     -------
     (pointing, sca, band): (int, int, str)
     """
-    image = OpenUniverse2024FITSImage(image_path, None, None)
-    return (image.pointing, image.sca, image.band)
+    # We would do it this way if all of the information were available in the header
+    POINTING_WERE_IN_HEADER = False
+    if POINTING_WERE_IN_HEADER:
+        image = OpenUniverse2024FITSImage(image_path, None, None)
+        return (image.pointing, image.sca, image.band)
+
+    # We're going to take a string like
+    # "../Roman_TDS_simple_model_{band}_{pointing}_{sca}.fits.gz"
+    # And use that to construct our regex to parse.
+    # We should get something like
+    # regex = "Roman_TDS_simple_model_(?P<band>[^_]+)_(?P<pointing>[^_]+)_(?P<sca>[^_]+).fits.gz"
+
+    regex = Path(INPUT_IMAGE_PATTERN).name
+    regex = re.sub("{pointing}", "(?P<pointing>[^_]+)", regex)
+    regex = re.sub("{band}", "(?P<band>[^_]+)", regex)
+    regex = re.sub("{sca}", "(?P<sca>[^_]+)", regex)
+
+    # The 'str' call means we can accept either strings or Path objects.
+    r = re.search(regex, str(image_path))
+
+    return (r["pointing"], r["sca"], r["band"])
 
 
 def read_data_records(data_records_path):

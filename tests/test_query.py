@@ -10,6 +10,7 @@ from detect_supernova.make_openuniverse_subtraction_pairs import (
 )
 from detect_supernova.util import (
     get_center_and_corners,
+    get_pointing_sca_band_from_image_path,
     make_data_records_from_pointing,
     make_data_records_from_image_path,
     read_data_records,
@@ -60,9 +61,25 @@ def test_get_center_and_corners():
     assert len(points) == 14
 
     # Make sure we have the columns we expect
-
-
 #    assert len(set(expected_df.columns)) == len(set(expected_df.columns).intersection(set(points.columns)))
+
+
+def test_get_pointing_sca_band_from_image_path():
+    expected_pointing, expected_sca, expected_band = 35083, 8, "R062"
+    image_path = Path(
+        Path(__file__).parent,
+        "photometry_test_data",
+        "RomanTDS",
+        "images",
+        "simple_model",
+        expected_band,
+        str(expected_pointing),
+        f"Roman_TDS_simple_model_{expected_band}_{expected_pointing}_{expected_sca}.fits.gz",
+    )
+
+    pointing, sca, band = get_pointing_sca_band_from_image_path(image_path)
+
+    assert (pointing, sca, band) == (pointing, sca, band)
 
 
 def test_get_earliest_template_for_image():
