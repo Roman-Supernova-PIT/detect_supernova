@@ -1,7 +1,5 @@
 from pathlib import Path
 
-import pandas as pd
-
 from detect_supernova.util import (
     get_center_and_corners,
     get_earliest_template_for_image,
@@ -50,15 +48,13 @@ def test_get_center_and_corners():
         "Roman_TDS_simple_model_R062_35083_8.fits.gz",
     )
     expected_columns = ("ra", "dec", "ra_00", "dec_00", "ra_01", "dec_01", "ra_10", "dec_10", "ra_11", "dec_11")
-    row = (4, 24.0, 1, 23, 5, 16, 10, 293, 100, 234)
-    expected_df = pd.DataFrame.from_records([row], columns=expected_columns)
 
     points = get_center_and_corners(image_path)
 
     assert len(points) == 14
 
     # Make sure we have the columns we expect
-#    assert len(set(expected_df.columns)) == len(set(expected_df.columns).intersection(set(points.columns)))
+    assert len(set(expected_columns)) == len(set(expected_columns).intersection(set(points.to_dict().keys())))
 
 
 def test_get_pointing_sca_band_from_image_path():
