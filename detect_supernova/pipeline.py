@@ -4,21 +4,15 @@ import os
 from pathlib import Path
 import tempfile
 
-import pandas as pd
-
 from astropy.coordinates import SkyCoord
 from astropy.wcs.utils import pixel_to_skycoord
 
 from detect_supernova import data_loader
-from detect_supernova.make_openuniverse_subtraction_pairs import get_earliest_template_for_image
 from detect_supernova import subtraction
 from detect_supernova import source_detection
 from detect_supernova import truth_matching
 from detect_supernova import truth_retrieval
 from detect_supernova.util import (
-    INPUT_IMAGE_PATTERN,
-    SIMS_DIR,
-    get_center_and_corners,
     make_data_records_from_pointing,
     make_data_records_from_image_path,
     read_data_records,
