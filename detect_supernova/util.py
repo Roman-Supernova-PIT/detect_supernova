@@ -144,7 +144,7 @@ def get_center_and_corners(image_path):
     return df
 
 
-def make_data_records(
+def make_data_records_from_pointing(
     science_pointing=None,
     science_sca=None,
     science_band=None,
@@ -229,6 +229,40 @@ def make_data_records(
     )
 
     return data_records
+
+
+def make_data_records_from_image_path(science_image_path, template_image_path=None):
+    """
+    Parameters
+    ----------
+    science_image_path: str, pathlib.Path
+    template_image_path: str, pathlib.Path [Optional]
+
+    Returns
+    -------
+    data_record
+    """
+    science_pointing, science_sca, science_band = get_pointing_sca_band_from_image_path(science_image_path)
+
+    data_records = make_data_records_from_pointing(science_pointing, science_sca, science_band)
+
+    return data_records
+
+
+def get_pointing_sca_band_from_image_path(image_path):
+    """
+    Returns the pointing, sca, band from the Image
+
+    Parameters
+    ----------
+    image_path
+
+    Returns
+    -------
+    (pointing, sca, band): (int, int, str)
+    """
+    image = OpenUniverse2024FITSImage(image_path, None, None)
+    return (image.pointing, image.sca, image.band)
 
 
 def read_data_records(data_records_path):

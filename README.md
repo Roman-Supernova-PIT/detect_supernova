@@ -55,7 +55,7 @@ or just by passing the image path
 
 ```
 image_path=/dvs_ro/cfs/cdirs/lsst/shared/external/roman-desc-sims/Roman_data/RomanTDS/images/simple_model/R062/53526/Roman_TDS_simple_model_R062_53526_1.fits.gz
-python detect_supernova/pipeline.py ${image_path} -o /dia_out_dir
+python detect_supernova/pipeline.py --science-path ${image_path} -o /dia_out_dir
 ```
 
 ## detect_supernova Workflow

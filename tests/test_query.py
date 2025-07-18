@@ -8,7 +8,12 @@ from detect_supernova.make_openuniverse_subtraction_pairs import (
     get_image_info_for_ra_dec,
     get_templates_for_points,
 )
-from detect_supernova.util import get_center_and_corners, make_data_records, read_data_records
+from detect_supernova.util import (
+    get_center_and_corners,
+    make_data_records_from_pointing,
+    make_data_records_from_image_path,
+    read_data_records,
+)
 
 
 def test_query():
@@ -115,8 +120,8 @@ def test_read_data_records_from_file():
     assert len(data_records) == 10
 
 
-def test_read_data_records_from_science_id_and_template_id():
-    data_records = make_data_records(
+def test_make_data_records_from_science_id_and_template_id():
+    data_records = make_data_records_from_pointing(
         science_pointing=54670,
         science_sca=18,
         science_band="R062",
@@ -130,13 +135,33 @@ def test_read_data_records_from_science_id_and_template_id():
     assert len(data_records) == 1
 
 
-def test_read_data_records_from_just_science_id():
-    data_records = make_data_records(
+def test_make_data_records_from_just_science_id():
+    data_records = make_data_records_from_pointing(
         science_pointing=35083,
         science_sca=8,
         science_band="R062",
         base_image_location=os.path.join(os.path.dirname(__file__), "photometry_test_data"),
     )
+
+    assert data_records.template_pointing[0] == 5044
+    assert data_records.template_sca[0] == 8
+    assert data_records.template_band[0] == "R062"
+    assert len(data_records) == 1
+
+
+def test_make_data_records_from_just_science_path():
+    image_path = os.path.join(
+        os.path.dirname(__file__),
+        "photometry_test_data",
+        "RomanTDS",
+        "images",
+        "simple_model",
+        "R062",
+        "35083",
+        "Roman_TDS_simple_model_R062_35083_8.fits.gz",
+    )
+
+    data_records = make_data_records_from_image_path(image_path)
 
     assert data_records.template_pointing[0] == 5044
     assert data_records.template_sca[0] == 8

@@ -19,7 +19,8 @@ from detect_supernova.util import (
     INPUT_IMAGE_PATTERN,
     SIMS_DIR,
     get_center_and_corners,
-    make_data_records,
+    make_data_records_from_pointing,
+    make_data_records_from_image_path,
     read_data_records,
 )
 
@@ -333,12 +334,14 @@ def main():
         help="Input file with data records.  It is an error to specify --data-records and --science-path.",
     )
     parser.add_argument(
+        "--science-image-path",
         "--science-path",
         type=str,
         default=None,
         help="Pass a science image by file path.  Will find a template image if --template-path not specified.",
     )
     parser.add_argument(
+        "--template-image-path",
         "--template-path",
         type=str,
         default=None,
@@ -399,8 +402,16 @@ def main():
 
     if args.data_records_path is not None:
         data_records = read_data_records(args.data_records_path)
-    else:
-        data_records = make_data_records(
+    elif args.science_image_path is not None:
+        # If the template_image path is not specified, then a template will be searched for.
+        data_records = make_data_records_from_image_path(
+            science_image_path=args.science_image_path, template_image_path=args.template_image_path
+        )
+    elif (args.science_pointing is not None) and (args.science_sca is not None):
+        # In principle the band is already specified by the pointing,
+        #   so we won't explicitly require it here.
+        # As for image_path, if template values aren't specified, a template will be searched for.
+        data_records = make_data_records_from_pointing(
             science_pointing=args.science_pointing,
             science_sca=args.science_sca,
             science_band=args.science_band,
@@ -408,6 +419,10 @@ def main():
             template_sca=args.template_sca,
             template_band=args.template_band,
         )
+    else:
+        print("No valid set of input file, image, or pointing specified.")
+        print("Stopping.")
+        return
 
     detection = Detection(data_records, args.temp_dir, args.output_dir)
     detection.run()
