@@ -1,0 +1,1 @@
+Accept pointing, sca, band or image_path on command line.  Automatically find an image for template.
