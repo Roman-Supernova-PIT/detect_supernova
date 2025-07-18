@@ -38,8 +38,7 @@ class ImageInfo:
 
 
 def get_center_and_corners(image_path):
-    """
-    Calculate the RA, Dec center and corners of an image
+    """Calculate the RA, Dec center and corners of an image
 
     Parameters
     ----------
@@ -153,8 +152,7 @@ def make_data_records_from_pointing(
     template_band=None,
     base_image_location=SIMS_DIR,
 ):
-    """
-    Returns data records from a specified science pointing and template pointing
+    """Returns data records from a specified science pointing and template pointing
 
     If passed a set of science_{pointing, sca, band}; template_{pointing, sca, band}
         will return that as a DataFrame in the same style as the data_record.
@@ -232,7 +230,10 @@ def make_data_records_from_pointing(
 
 
 def make_data_records_from_image_path(science_image_path, template_image_path=None):
-    """
+    """Create the pointing, sca, band records for an image path.
+
+    If a template path is not given, then automatically finds one.
+
     Parameters
     ----------
     science_image_path: str, pathlib.Path
@@ -250,12 +251,14 @@ def make_data_records_from_image_path(science_image_path, template_image_path=No
 
 
 def get_pointing_sca_band_from_image_path(image_path):
-    """
-    Returns the pointing, sca, band from the Image
+    """Gives the pointing, sca, band from an image
+
+    Unfortunately, the pointing is not stored in the metadata
+    for the OpenUniverse2024 FITS data, so we will parse from the filename.
 
     Parameters
     ----------
-    image_path
+    image_path: str, pathlib.Path
 
     Returns
     -------
@@ -266,7 +269,8 @@ def get_pointing_sca_band_from_image_path(image_path):
 
 
 def read_data_records(data_records_path):
-    """
+    """Read a set of {science, template}_{pointing, sca, band} from a file.
+
     Parameters
     ----------
     data_records_path: str, pathlib.Path

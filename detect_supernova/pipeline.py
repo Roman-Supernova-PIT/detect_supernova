@@ -20,7 +20,14 @@ from detect_supernova.util import (
 
 
 class Detection:
-    """
+    """Set up and run a subtraction
+
+    Uses SFFT and Source Extractor for the main work.
+    Most of the rest of the code is defining the file paths.
+
+    Notes
+    -----
+    On NERSC the sim images and truth are in:
     INPUT_IMAGE_PATTERN = ("/global/cfs/cdirs/lsst/shared/external/roman-desc-sims/Roman_data"
                                 "/RomanTDS/images/simple_model/{band}/{pointing}/Roman_TDS_simple_model_{band}_{pointing}_{sca}.fits.gz")
     INPUT_TRUTH_PATTERN = ("/global/cfs/cdirs/lsst/shared/external/roman-desc-sims/Roman_data"

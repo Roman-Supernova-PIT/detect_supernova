@@ -87,7 +87,8 @@ def get_templates_for_image(im, min_points=3):
 
 
 def get_earliest_template_for_image(image, **kwargs):
-    """
+    """Get the earliest template that overlaps at least half the image.
+
     Parameters
     ----------
     image : DataFrame of image info from Roman-DESC-simdex
