@@ -2,7 +2,7 @@ import argparse
 import gzip
 import io
 import os
-import pathlib
+from pathlib import Path
 import shutil
 
 import numpy as np
@@ -35,7 +35,7 @@ def gz_and_ext(in_path, out_path):
 
 
 def sky_subtract(
-    inpath, skysubpath, detmaskpath, temp_dir=pathlib.Path("/tmp"), force=False
+    inpath, skysubpath, detmaskpath, temp_dir=Path("/tmp"), force=False
 ):
     # Modified from https://github.com/Roman-Supernova-PIT/phrosty/blob/main/phrosty/imagesubtraction.py#L100
 
@@ -138,7 +138,7 @@ class Pipeline:
 
         self.galsim_config_file = galsim_config_file
         self.temp_dir = temp_dir
-        self.out_dir = pathlib.Path(out_dir)
+        self.out_dir = Path(out_dir)
 
         # science_info and template_info contains the data_ids of images and paths of temporary files:
         #   (sky subtracted images, detection masks, psfs)
@@ -307,7 +307,7 @@ def main():
 
     args = parser.parse_args()
 
-    galsim_config = pathlib.Path(os.getenv("SN_INFO_DIR")) / "tds.yaml"
+    galsim_config = Path(os.getenv("SN_INFO_DIR")) / "tds.yaml"
 
     pipeline = Pipeline(
         args.science_band,

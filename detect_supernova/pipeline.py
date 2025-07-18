@@ -1,7 +1,7 @@
 import argparse
 import atexit
 import os
-import pathlib
+from pathlib import Path
 import tempfile
 
 import pandas as pd
@@ -47,9 +47,9 @@ class Detection:
 
     # Source detection config.
     SOURCE_EXTRACTOR_EXECUTABLE = "source-extractor"
-    DETECTION_CONFIG = os.path.join(os.path.dirname(__file__), "..", "configs", "default.sex")
-    DETECTION_PARA = os.path.join(os.path.dirname(__file__), "..", "configs", "default.param")
-    DETECTION_FILTER = os.path.join(os.path.dirname(__file__), "..", "configs", "default.conv")
+    DETECTION_CONFIG = Path(Path(__file__).parent, "..", "configs", "default.sex")
+    DETECTION_PARA = Path(Path(__file__).parent, "..", "configs", "default.param")
+    DETECTION_FILTER = Path(Path(__file__).parent, "..", "configs", "default.conv")
 
     # Source Matching
     MATCH_RADIUS = 0.4  # in arcsec unit
@@ -155,56 +155,56 @@ class Detection:
 
         difference_id = self.__class__.get_difference_id(science_id, template_id)
         diff_pattern = self.DIFF_PATTERN.format(**difference_id)
-        file_path["full_output_dir"] = os.path.join(self.output_dir, diff_pattern)
+        file_path["full_output_dir"] = Path(self.output_dir, diff_pattern)
         os.makedirs(file_path["full_output_dir"], exist_ok=True)
 
         # subtraction
         file_path["science_image_path"] = self.INPUT_IMAGE_PATTERN.format(**science_id)
         file_path["template_image_path"] = self.INPUT_IMAGE_PATTERN.format(**template_id)
-        file_path["difference_image_path"] = os.path.join(
+        file_path["difference_image_path"] = Path(
             file_path["full_output_dir"],
             self.DIFF_IMAGE_PREFIX + diff_pattern + ".fits",
         )
         # detection
-        file_path["difference_detection_path"] = os.path.join(
+        file_path["difference_detection_path"] = Path(
             file_path["full_output_dir"],
             self.DIFF_DETECTION_PREFIX + diff_pattern + ".cat",
         )
-        file_path["score_image_path"] = os.path.join(
+        file_path["score_image_path"] = Path(
             file_path["full_output_dir"],
             self.DIFF_SCORE_PREFIX + diff_pattern + ".fits",
         )
         # diff score image detection
-        file_path["score_image_detection_path"] = os.path.join(
+        file_path["score_image_detection_path"] = Path(
             file_path["full_output_dir"],
             self.SCORE_DETECTION_PREFIX + diff_pattern + ".ecsv",
         )
         # decorr diff image detection
-        file_path["difference_detection_path"] = os.path.join(
+        file_path["difference_detection_path"] = Path(
             file_path["full_output_dir"],
             self.DIFF_DETECTION_PREFIX + diff_pattern + ".cat",
         )
         # truth retrieval
         file_path["science_truth_path"] = self.INPUT_TRUTH_PATTERN.format(**science_id)
         file_path["template_truth_path"] = self.INPUT_TRUTH_PATTERN.format(**template_id)
-        file_path["difference_truth_path"] = os.path.join(
+        file_path["difference_truth_path"] = Path(
             file_path["full_output_dir"],
             self.DIFF_TRUTH_PREFIX + diff_pattern + ".ecsv",
         )
         # truth matching
-        file_path["transients_to_detection_path"] = os.path.join(
+        file_path["transients_to_detection_path"] = Path(
             file_path["full_output_dir"],
             self.TRANSIENTS_TO_DETECTION_PREFIX + diff_pattern + ".ecsv",
         )
-        file_path["detection_to_transients_path"] = os.path.join(
+        file_path["detection_to_transients_path"] = Path(
             file_path["full_output_dir"],
             self.DETECTION_TO_TRANSIENTS_PREFIX + diff_pattern + ".ecsv",
         )
-        file_path["transients_to_score_detection_path"] = os.path.join(
+        file_path["transients_to_score_detection_path"] = Path(
             file_path["full_output_dir"],
             self.TRANSIENTS_TO_SCORE_DETECTION_PREFIX + diff_pattern + ".ecsv",
         )
-        file_path["score_detection_to_transients_path"] = os.path.join(
+        file_path["score_detection_to_transients_path"] = Path(
             file_path["full_output_dir"],
             self.SCORE_DETECTION_TO_TRANSIENTS_PREFIX + diff_pattern + ".ecsv",
         )
@@ -306,10 +306,10 @@ class Detection:
         # create temporary directory
         if self.temp_dir is None:
             temp_dir_obj = tempfile.TemporaryDirectory()
-            temp_dir = pathlib.Path(temp_dir_obj.name)
+            temp_dir = Path(temp_dir_obj.name)
             atexit.register(temp_dir_obj.cleanup)
         else:
-            temp_dir = pathlib.Path(self.temp_dir)
+            temp_dir = Path(self.temp_dir)
             os.makedirs(temp_dir, exist_ok=True)
 
         for i, row in self.data_records.iterrows():

@@ -1,6 +1,6 @@
 import os
+from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
 from detect_supernova.make_openuniverse_subtraction_pairs import (
@@ -41,8 +41,8 @@ def test_get_templates_for_points():
 
 
 def test_get_center_and_corners():
-    image_path = os.path.join(
-        os.path.dirname(__file__),
+    image_path = Path(
+        Path(__file__).parent,
         "photometry_test_data",
         "RomanTDS",
         "images",
@@ -66,8 +66,8 @@ def test_get_center_and_corners():
 
 
 def test_get_earliest_template_for_image():
-    image_path = os.path.join(
-        os.path.dirname(__file__),
+    image_path = Path(
+        Path(__file__).parent,
         "photometry_test_data",
         "RomanTDS",
         "images",
@@ -114,7 +114,7 @@ def test_get_image_info_for_ra_dec():
 
 
 def test_read_data_records_from_file():
-    data_records_path = os.path.join(os.path.dirname(__file__), "test_ten_data_records.csv")
+    data_records_path = Path(__file__).parent / "test_ten_data_records.csv"
     data_records = read_data_records(data_records_path=data_records_path)
 
     assert len(data_records) == 10
@@ -128,7 +128,7 @@ def test_make_data_records_from_science_id_and_template_id():
         template_pointing=26565,
         template_sca=18,
         template_band="R062",
-        base_image_location=os.path.join(os.path.dirname(__file__), "photometry_test_data"),
+        base_image_location=Path(__file__).parent / "photometry_test_data",
     )
 
     assert data_records.template_pointing[0] == 26565
@@ -140,7 +140,7 @@ def test_make_data_records_from_just_science_id():
         science_pointing=35083,
         science_sca=8,
         science_band="R062",
-        base_image_location=os.path.join(os.path.dirname(__file__), "photometry_test_data"),
+        base_image_location=Path(__file__).parent / "photometry_test_data",
     )
 
     assert data_records.template_pointing[0] == 5044
@@ -150,8 +150,8 @@ def test_make_data_records_from_just_science_id():
 
 
 def test_make_data_records_from_just_science_path():
-    image_path = os.path.join(
-        os.path.dirname(__file__),
+    image_path = Path(
+        Path(__file__).parent,
         "photometry_test_data",
         "RomanTDS",
         "images",

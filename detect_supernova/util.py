@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import os
-import pathlib
+from pathlib import Path
 
 import pandas as pd
 
@@ -12,10 +12,10 @@ INPUT_IMAGE_PATTERN = (
     "RomanTDS/images/simple_model/{band}/{pointing}/Roman_TDS_simple_model_{band}_{pointing}_{sca}.fits.gz"
 )
 INPUT_TRUTH_PATTERN = "RomanTDS/truth/{band}/{pointing}/Roman_TDS_index_{band}_{pointing}_{sca}.txt"
-SIMS_DIR = pathlib.Path(os.getenv("SIMS_DIR", None))
-TEMP_DIR = pathlib.Path("/phrosty_temp")
+SIMS_DIR = Path(os.getenv("SIMS_DIR"))
+TEMP_DIR = Path("/phrosty_temp")
 
-GALSIM_CONFIG = pathlib.Path(os.getenv("SN_INFO_DIR")) / "tds.yaml"
+GALSIM_CONFIG = Path(os.getenv("SN_INFO_DIR")) / "tds.yaml"
 
 IMAGE_WIDTH = 4088
 IMAGE_HEIGHT = 4088
@@ -24,10 +24,10 @@ IMAGE_HEIGHT = 4088
 @dataclass
 class ImageInfo:
     data_id: dict
-    temp_dir: pathlib.Path
+    temp_dir: Path
 
     def __post_init__(self):
-        self.image_path = SIMS_DIR / pathlib.Path(INPUT_IMAGE_PATTERN.format(**self.data_id))
+        self.image_path = SIMS_DIR / Path(INPUT_IMAGE_PATTERN.format(**self.data_id))
         self.cx = IMAGE_WIDTH // 2
         self.cy = IMAGE_HEIGHT // 2
 
@@ -194,7 +194,7 @@ def make_data_records_from_pointing(
             "band": template_band,
         }
     else:
-        science_image_path = base_image_location / pathlib.Path(INPUT_IMAGE_PATTERN.format(**science_id))
+        science_image_path = base_image_location / Path(INPUT_IMAGE_PATTERN.format(**science_id))
         science_image_points = get_center_and_corners(science_image_path)
         science_image_points["filter"] = science_id["band"]
 
