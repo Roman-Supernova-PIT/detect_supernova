@@ -1,9 +1,8 @@
 import argparse
-from dataclasses import dataclass
 import gzip
 import io
 import os
-import pathlib
+from pathlib import Path
 import shutil
 
 import numpy as np
@@ -15,19 +14,7 @@ from sfft.SpaceSFFTCupyFlow import SpaceSFFT_CupyFlow
 from roman_imsim.utils import roman_utils
 from sfft.utils.SExSkySubtract import SEx_SkySubtract
 
-INPUT_IMAGE_PATTERN = (
-    "RomanTDS/images/simple_model/{band}/{pointing}/Roman_TDS_simple_model_{band}_{pointing}_{sca}.fits.gz"
-)
-INPUT_TRUTH_PATTERN = (
-    "RomanTDS/truth/{band}/{pointing}/Roman_TDS_index_{band}_{pointing}_{sca}.txt"
-)
-SIMS_DIR = pathlib.Path(os.getenv("SIMS_DIR", None))
-TEMP_DIR = pathlib.Path("/phrosty_temp")
-
-GALSIM_CONFIG = pathlib.Path(os.getenv("SN_INFO_DIR")) / "tds.yaml"
-
-IMAGE_WIDTH = 4088
-IMAGE_HEIGHT = 4088
+from util import ImageInfo, GALSIM_CONFIG
 
 
 def gz_and_ext(in_path, out_path):
@@ -48,7 +35,7 @@ def gz_and_ext(in_path, out_path):
 
 
 def sky_subtract(
-    inpath, skysubpath, detmaskpath, temp_dir=pathlib.Path("/tmp"), force=False
+    inpath, skysubpath, detmaskpath, temp_dir=Path("/tmp"), force=False
 ):
     # Modified from https://github.com/Roman-Supernova-PIT/phrosty/blob/main/phrosty/imagesubtraction.py#L100
 
@@ -134,24 +121,6 @@ def load_fits_to_cp(path, return_hdr=True, return_data=True, hdu_index=0, dtype=
     return hdr, data
 
 
-@dataclass
-class ImageInfo:
-    data_id: dict
-    temp_dir: pathlib.Path
-
-    def __post_init__(self):
-        self.image_path = SIMS_DIR / pathlib.Path(
-            INPUT_IMAGE_PATTERN.format(**self.data_id)
-        )
-        self.cx = IMAGE_WIDTH // 2
-        self.cy = IMAGE_HEIGHT // 2
-
-        self.image_name = self.image_path.name
-        self.skysub_path = self.temp_dir / f"skysub_{self.image_name}"
-        self.detmask_path = self.temp_dir / f"detmask_{self.image_name}"
-        self.psf_path = self.temp_dir / f"psf_{self.image_name}"
-
-
 class Pipeline:
 
     def __init__(
@@ -169,7 +138,7 @@ class Pipeline:
 
         self.galsim_config_file = galsim_config_file
         self.temp_dir = temp_dir
-        self.out_dir = pathlib.Path(out_dir)
+        self.out_dir = Path(out_dir)
 
         # science_info and template_info contains the data_ids of images and paths of temporary files:
         #   (sky subtracted images, detection masks, psfs)
@@ -338,7 +307,7 @@ def main():
 
     args = parser.parse_args()
 
-    galsim_config = pathlib.Path(os.getenv("SN_INFO_DIR")) / "tds.yaml"
+    galsim_config = Path(os.getenv("SN_INFO_DIR")) / "tds.yaml"
 
     pipeline = Pipeline(
         args.science_band,
