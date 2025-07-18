@@ -1,16 +1,13 @@
-import os
 from pathlib import Path
 
 import pandas as pd
 
-from detect_supernova.make_openuniverse_subtraction_pairs import (
-    get_earliest_template_for_image,
-    get_image_info_for_ra_dec,
-    get_templates_for_points,
-)
 from detect_supernova.util import (
     get_center_and_corners,
+    get_earliest_template_for_image,
+    get_image_info_for_ra_dec,
     get_pointing_sca_band_from_image_path,
+    get_templates_for_points,
     make_data_records_from_pointing,
     make_data_records_from_image_path,
     read_data_records,
