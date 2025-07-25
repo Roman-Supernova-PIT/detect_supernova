@@ -1,5 +1,5 @@
 [project]
-name = "detect_supernova"
+name = "sidecar"
 description = "Supernova discovery for Roman SNPIT"
 requires-python = ">=3.11"
 dynamic = ["version"]
@@ -54,7 +54,7 @@ docs = [
 ]
 
 [project.urls]
-repository = "https://github.com/Roman-Supernova-PIT/detect_supernova"
+repository = "https://github.com/Roman-Supernova-PIT/sidecar"
 
 [build-system]
 requires = [
@@ -78,11 +78,11 @@ include = [
 
 [tool.setuptools_scm]
 # can be empty if no extra settings are needed, presence enables setuptools-scm
-version_file = "detect_supernova/_version.py"
+version_file = "sidecar/_version.py"
 
 [tool.pytest.ini_options]
 testpaths = [
-  "detect_supernova",
+  "sidecar",
   "docs",
 ]
 doctest_plus = "enabled"
@@ -146,12 +146,12 @@ select = [ 'F', 'E101', 'E111', 'E112', 'E113', 'E115', 'E117',
 # This can be .rst or .md, towncrier's default template works with both.
 filename = "CHANGES.rst"
 directory = "changes"
-package = "detect_supernova"
-package_dir = "detect_supernova"
+package = "sidecar"
+package_dir = "sidecar"
 title_format = "{version} ({project_date})"
 ignore = [".gitkeep"]
 wrap = true
-issue_format = "`#{issue} <https://github.com/Roman-Supernova-PIT/detect_supernova/issues/{issue}>`_"
+issue_format = "`#{issue} <https://github.com/Roman-Supernova-PIT/sidecar/issues/{issue}>`_"
 
 [[tool.towncrier.type]]
 directory = "/"
@@ -174,6 +174,6 @@ name = "New Features"
 showcontent = true
 
 [[tool.towncrier.type]]
-directory = "detect_supernova"
-name = "detect_supernova"
+directory = "sidecar"
+name = "sidecar"
 showcontent = true

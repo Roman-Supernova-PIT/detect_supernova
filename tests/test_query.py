@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from detect_supernova.util import (
+from sidecar.util import (
     get_center_and_corners,
     get_earliest_template_for_image,
     get_image_info_for_ra_dec,

@@ -20,4 +20,4 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/ruff-action@v3
         with:
-          src: "/home/runner/work/detect_supernova"
+          src: "/home/runner/work/sidecar"
