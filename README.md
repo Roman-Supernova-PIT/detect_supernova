@@ -1,10 +1,10 @@
 # "sidecar" overview
 
-The supernova detection pipeline for the Roman Supernova Project Infrastructure Team (SNPIT).  This package is designed to performance image differnece, detect transient sources, and evaluate efficiency and purity of Roman images.
+The supernova detection pipeline for the Roman Supernova Project Infrastructure Team (SNPIT).  This package is designed to performance image difference, detect transient sources, and evaluate efficiency and purity for supernova science with the Roman Wide Field Instrument.
 
 This package is intended to be run within the roman-snpit-env container environment. The instructions below walk you through preparing your environment and running the pipeline step-by-step on Perlmutter at NERSC. 
 
-The name "sidecar" is following the beverage-theme of Roman Supernova PIT photometry package naming.  It also a broader meaning of a supporting package to the main photometry.  We need to be able to find supernova in order to do photometry.  However, if we get identified targets from a different sources, the sidecar isn't necessary to then do the photometry.
+The name "sidecar" (which we could pretend is an acronym for "Supernova Ia DEteCtion AlgoRithm") is following the beverage-theme of Roman Supernova PIT photometry package naming.  It also a broader meaning of a supporting package to the main photometry.  We need to be able to find supernova in order to do photometry.  However, if we get identified targets from a different sources, the sidecar isn't necessary to then do the photometry.
 
 ## Step 1: Setup Container Environment
 
