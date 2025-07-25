@@ -2,7 +2,7 @@
 
 import argparse
 
-from detect_supernova.util import get_earliest_template_for_image, get_image_info_for_ra_dec
+from sidecar.util import get_earliest_template_for_image, get_image_info_for_ra_dec
 
 
 def run(

@@ -7,12 +7,12 @@ import tempfile
 from astropy.coordinates import SkyCoord
 from astropy.wcs.utils import pixel_to_skycoord
 
-from detect_supernova import data_loader
-from detect_supernova import subtraction
-from detect_supernova import source_detection
-from detect_supernova import truth_matching
-from detect_supernova import truth_retrieval
-from detect_supernova.util import (
+from sidecar import data_loader
+from sidecar import subtraction
+from sidecar import source_detection
+from sidecar import truth_matching
+from sidecar import truth_retrieval
+from sidecar.util import (
     make_data_records_from_pointing,
     make_data_records_from_image_path,
     read_data_records,

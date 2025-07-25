@@ -1,5 +1,5 @@
 ---
-name: "🐞 Issue report for detect_supernova"
+name: "🐞 Issue report for sidecar"
 about: Create a report describing unexpected or incorrect behavior.
 title: "[Issue]: <title>"
 labels: bug
