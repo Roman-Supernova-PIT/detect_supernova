@@ -1,48 +1,46 @@
 import argparse
 import atexit
 import os
-import pathlib
+from pathlib import Path
 import tempfile
-
-import pandas as pd
 
 from astropy.coordinates import SkyCoord
 from astropy.wcs.utils import pixel_to_skycoord
 
-import data_loader
-import subtraction
-import source_detection
-import truth_matching
-import truth_retrieval
+from detect_supernova import data_loader
+from detect_supernova import subtraction
+from detect_supernova import source_detection
+from detect_supernova import truth_matching
+from detect_supernova import truth_retrieval
+from detect_supernova.util import (
+    make_data_records_from_pointing,
+    make_data_records_from_image_path,
+    read_data_records,
+)
 
 
 class Detection:
+    """Set up and run a subtraction
 
-    INPUT_COLUMNS = [
-        "science_band",
-        "science_pointing",
-        "science_sca",
-        "template_band",
-        "template_pointing",
-        "template_sca",
-    ]
+    Uses SFFT and Source Extractor for the main work.
+    Most of the rest of the code is defining the file paths.
 
-    """
+    Notes
+    -----
+    On NERSC the sim images and truth are in:
     INPUT_IMAGE_PATTERN = ("/global/cfs/cdirs/lsst/shared/external/roman-desc-sims/Roman_data"
                                 "/RomanTDS/images/simple_model/{band}/{pointing}/Roman_TDS_simple_model_{band}_{pointing}_{sca}.fits.gz")
     INPUT_TRUTH_PATTERN = ("/global/cfs/cdirs/lsst/shared/external/roman-desc-sims/Roman_data"
                                  "/RomanTDS/truth/{band}/{pointing}/Roman_TDS_index_{band}_{pointing}_{sca}.txt")
     """
+
     SIMS_DIR = os.getenv("SIMS_DIR", None)
 
     INPUT_IMAGE_PATTERN = (
         SIMS_DIR
         + "/RomanTDS/images/simple_model/{band}/{pointing}/Roman_TDS_simple_model_{band}_{pointing}_{sca}.fits.gz"
     )
-    INPUT_TRUTH_PATTERN = (
-        SIMS_DIR
-        + "/RomanTDS/truth/{band}/{pointing}/Roman_TDS_index_{band}_{pointing}_{sca}.txt"
-    )
+    INPUT_TRUTH_PATTERN = SIMS_DIR + "/RomanTDS/truth/{band}/{pointing}/Roman_TDS_index_{band}_{pointing}_{sca}.txt"
 
     DIFF_PATTERN = (
         "{science_band}_{science_pointing}_{science_sca}_-_{template_band}_{template_pointing}_{template_sca}"
@@ -50,15 +48,9 @@ class Detection:
 
     # Source detection config.
     SOURCE_EXTRACTOR_EXECUTABLE = "source-extractor"
-    DETECTION_CONFIG = os.path.join(
-        os.path.dirname(__file__), "..", "configs", "default.sex"
-    )
-    DETECTION_PARA = os.path.join(
-        os.path.dirname(__file__), "..", "configs", "default.param"
-    )
-    DETECTION_FILTER = os.path.join(
-        os.path.dirname(__file__), "..", "configs", "default.conv"
-    )
+    DETECTION_CONFIG = Path(Path(__file__).parent, "..", "configs", "default.sex")
+    DETECTION_PARA = Path(Path(__file__).parent, "..", "configs", "default.param")
+    DETECTION_FILTER = Path(Path(__file__).parent, "..", "configs", "default.conv")
 
     # Source Matching
     MATCH_RADIUS = 0.4  # in arcsec unit
@@ -74,11 +66,8 @@ class Detection:
     TRANSIENTS_TO_SCORE_DETECTION_PREFIX = "transients_to_score_detection_"
     SCORE_DETECTION_TO_TRANSIENTS_PREFIX = "score_detection_to_transients_"
 
-    def __init__(self, data_records_path, temp_dir=None, output_dir="./output"):
-        self.data_records_path = data_records_path
-        self.data_records = pd.read_csv(
-            self.data_records_path, usecols=self.INPUT_COLUMNS
-        )
+    def __init__(self, data_records, temp_dir=None, output_dir="./output"):
+        self.data_records = data_records
         self.temp_dir = temp_dir
         self.output_dir = output_dir
 
@@ -142,12 +131,8 @@ class Detection:
 
         detection = data_loader.load_table(difference_detection_path)
         transients = truth[truth.obj_type == "transient"].copy().reset_index(drop=True)
-        transients_skycoord = SkyCoord(
-            transients.ra, transients.dec, frame=transient_frame, unit="deg"
-        )
-        detection_skycoord = pixel_to_skycoord(
-            detection[x_col], detection[y_col], difference_wcs
-        )
+        transients_skycoord = SkyCoord(transients.ra, transients.dec, frame=transient_frame, unit="deg")
+        detection_skycoord = pixel_to_skycoord(detection[x_col], detection[y_col], difference_wcs)
         transients_to_detection = truth_matching.skymatch_and_join(
             transients, detection, transients_skycoord, detection_skycoord, match_radius
         )
@@ -171,60 +156,56 @@ class Detection:
 
         difference_id = self.__class__.get_difference_id(science_id, template_id)
         diff_pattern = self.DIFF_PATTERN.format(**difference_id)
-        file_path["full_output_dir"] = os.path.join(self.output_dir, diff_pattern)
+        file_path["full_output_dir"] = Path(self.output_dir, diff_pattern)
         os.makedirs(file_path["full_output_dir"], exist_ok=True)
 
         # subtraction
         file_path["science_image_path"] = self.INPUT_IMAGE_PATTERN.format(**science_id)
-        file_path["template_image_path"] = self.INPUT_IMAGE_PATTERN.format(
-            **template_id
-        )
-        file_path["difference_image_path"] = os.path.join(
+        file_path["template_image_path"] = self.INPUT_IMAGE_PATTERN.format(**template_id)
+        file_path["difference_image_path"] = Path(
             file_path["full_output_dir"],
             self.DIFF_IMAGE_PREFIX + diff_pattern + ".fits",
         )
         # detection
-        file_path["difference_detection_path"] = os.path.join(
+        file_path["difference_detection_path"] = Path(
             file_path["full_output_dir"],
             self.DIFF_DETECTION_PREFIX + diff_pattern + ".cat",
         )
-        file_path["score_image_path"] = os.path.join(
+        file_path["score_image_path"] = Path(
             file_path["full_output_dir"],
             self.DIFF_SCORE_PREFIX + diff_pattern + ".fits",
         )
         # diff score image detection
-        file_path["score_image_detection_path"] = os.path.join(
+        file_path["score_image_detection_path"] = Path(
             file_path["full_output_dir"],
             self.SCORE_DETECTION_PREFIX + diff_pattern + ".ecsv",
         )
         # decorr diff image detection
-        file_path["difference_detection_path"] = os.path.join(
+        file_path["difference_detection_path"] = Path(
             file_path["full_output_dir"],
             self.DIFF_DETECTION_PREFIX + diff_pattern + ".cat",
         )
         # truth retrieval
         file_path["science_truth_path"] = self.INPUT_TRUTH_PATTERN.format(**science_id)
-        file_path["template_truth_path"] = self.INPUT_TRUTH_PATTERN.format(
-            **template_id
-        )
-        file_path["difference_truth_path"] = os.path.join(
+        file_path["template_truth_path"] = self.INPUT_TRUTH_PATTERN.format(**template_id)
+        file_path["difference_truth_path"] = Path(
             file_path["full_output_dir"],
             self.DIFF_TRUTH_PREFIX + diff_pattern + ".ecsv",
         )
         # truth matching
-        file_path["transients_to_detection_path"] = os.path.join(
+        file_path["transients_to_detection_path"] = Path(
             file_path["full_output_dir"],
             self.TRANSIENTS_TO_DETECTION_PREFIX + diff_pattern + ".ecsv",
         )
-        file_path["detection_to_transients_path"] = os.path.join(
+        file_path["detection_to_transients_path"] = Path(
             file_path["full_output_dir"],
             self.DETECTION_TO_TRANSIENTS_PREFIX + diff_pattern + ".ecsv",
         )
-        file_path["transients_to_score_detection_path"] = os.path.join(
+        file_path["transients_to_score_detection_path"] = Path(
             file_path["full_output_dir"],
             self.TRANSIENTS_TO_SCORE_DETECTION_PREFIX + diff_pattern + ".ecsv",
         )
-        file_path["score_detection_to_transients_path"] = os.path.join(
+        file_path["score_detection_to_transients_path"] = Path(
             file_path["full_output_dir"],
             self.SCORE_DETECTION_TO_TRANSIENTS_PREFIX + diff_pattern + ".ecsv",
         )
@@ -253,9 +234,7 @@ class Detection:
         file_path = self.path_helper(science_id, template_id)
 
         print(
-            "[INFO] Processing started for data records "
-            f"| Science ID {science_id} "
-            f"| Template ID {template_id} "
+            "[INFO] Processing started for data records " f"| Science ID {science_id} " f"| Template ID {template_id} "
         )
 
         print("[INFO] Processing subtraction")
@@ -328,10 +307,10 @@ class Detection:
         # create temporary directory
         if self.temp_dir is None:
             temp_dir_obj = tempfile.TemporaryDirectory()
-            temp_dir = pathlib.Path(temp_dir_obj.name)
+            temp_dir = Path(temp_dir_obj.name)
             atexit.register(temp_dir_obj.cleanup)
         else:
-            temp_dir = pathlib.Path(self.temp_dir)
+            temp_dir = Path(self.temp_dir)
             os.makedirs(temp_dir, exist_ok=True)
 
         for i, row in self.data_records.iterrows():
@@ -351,17 +330,102 @@ def main():
     parser.add_argument(
         "-d",
         "--data-records",
+        dest="data_records_path",
         type=str,
-        required=True,
-        help="Input file with data records.",
+        help="Input file with data records.  It is an error to specify --data-records and --science-path.",
+    )
+    parser.add_argument(
+        "--science-image-path",
+        "--science-path",
+        type=str,
+        default=None,
+        help="Pass a science image by file path.  Will find a template image if --template-path not specified.",
+    )
+    parser.add_argument(
+        "--template-image-path",
+        "--template-path",
+        type=str,
+        default=None,
+        help="Pass a template image by file path.  Optional.  Only used with --science-path.",
+    )
+    parser.add_argument(
+        "--science-pointing",
+        "--pointing",
+        type=int,
+        default=None,
+        help="Specify an image by pointing.  Must also specify sca, band.",
+    )
+    parser.add_argument(
+        "--science-sca",
+        "--sca",
+        type=int,
+        default=None,
+        help="Specify an image by sca.  Must also specify pointing, band.",
+    )
+    parser.add_argument(
+        "--science-band",
+        "--band",
+        type=str,
+        default=None,
+        help="Specify an image by band.  Must also specify pointing, sca.",
+    )
+    parser.add_argument(
+        "--template-pointing",
+        type=int,
+        default=None,
+        help="Specify a template pointing.",
+    )
+    parser.add_argument(
+        "--template-sca",
+        type=int,
+        default=None,
+        help="Specify an image by template sca.",
+    )
+    parser.add_argument(
+        "--template-band",
+        type=str,
+        default=None,
+        help="Specify an image by template band.  This is optional and will default to --science-band",
     )
     parser.add_argument("-t", "--temp-dir", default=None, help="Temporary directory.")
-    parser.add_argument(
-        "-o", "--output-dir", type=str, default="./output", help="Output directory."
-    )
+    parser.add_argument("-o", "--output-dir", type=str, default="./output", help="Output directory.")
     args = parser.parse_args()
 
-    detection = Detection(args.data_records, args.temp_dir, args.output_dir)
+    # Validate consistency
+    if args.data_records_path is not None and (
+        (args.science_image_path is not None)
+        or (args.science_pointing is not None)
+        or (args.science_sca is not None)
+        or (args.science_band is not None)
+    ):
+        print("It is an error to specify 'data_records_path' and any of 'science_(image_path,pointing,sca,band)'")
+        return
+
+    if args.data_records_path is not None:
+        data_records = read_data_records(args.data_records_path)
+    elif args.science_image_path is not None:
+        # If the template_image path is not specified, then a template will be searched for.
+        data_records = make_data_records_from_image_path(
+            science_image_path=args.science_image_path, template_image_path=args.template_image_path
+        )
+    elif (args.science_pointing is not None) and (args.science_sca is not None):
+        # In principle the band is already specified by the pointing,
+        #   so we won't explicitly require it here.
+        # As for image_path, if template values aren't specified, a template will be searched for.
+        data_records = make_data_records_from_pointing(
+            science_pointing=args.science_pointing,
+            science_sca=args.science_sca,
+            science_band=args.science_band,
+            template_pointing=args.template_pointing,
+            template_sca=args.template_sca,
+            template_band=args.template_band,
+        )
+    else:
+        print("No valid set of input file, image, or pointing specified.")
+        print("Stopping.")
+        return
+
+    detection = Detection(data_records, args.temp_dir, args.output_dir)
     detection.run()
 
 
