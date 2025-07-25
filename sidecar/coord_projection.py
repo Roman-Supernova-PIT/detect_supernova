@@ -1,8 +1,8 @@
 import numpy as np
 
 from astropy.coordinates import SkyCoord, match_coordinates_sky
-import astropy.units as u
 from astropy.wcs.utils import skycoord_to_pixel, pixel_to_skycoord
+import astropy.units as u
 
 
 def xy_to_radec(x, y, wcs):
@@ -49,4 +49,15 @@ def two_direction_skymatch(coord, cat_coord, radius=0.4 * u.arcsec):
     dist_status = sep2d < radius
     matched_status = idx_[idx] == np.arange(len(idx))
     matched_status = np.logical_and(dist_status, matched_status)
+    return matched_status, idx
+
+
+def one_direction_sky_reject(coord, cat_coord, radius=0.4 * u.arcsec):
+    """
+    Reject entries in coord that are within radius of entry in cat_coord
+    """
+    # coord is in degree unit
+    idx, sep2d, _ = match_coordinates_sky(coord, cat_coord)
+    sep2d = sep2d.to(u.arcsec)
+    matched_status = sep2d > radius
     return matched_status, idx
