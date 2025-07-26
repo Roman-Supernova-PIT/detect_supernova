@@ -27,7 +27,7 @@ def skymatch_and_reject(left_table, right_table, left_skycoord, right_skycoord, 
     right_table : pandas.DataFrame
     left_skycoord : AstroPy.coord.SkyCoord
     right_skycoord : AstroPy.coord.SkyCCoord
-    radius: Quantity -> degree
+    match_radius: Quantity -> degree
 
     Returns
     -------
